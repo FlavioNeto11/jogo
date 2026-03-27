@@ -1,0 +1,222 @@
+// ============================================
+// UI SYSTEM
+// ============================================
+class UISystem {
+    constructor() {
+        this.toolbarSlots = document.getElementById('toolbar-slots');
+        this.healthBar = document.getElementById('health-bar');
+        this.healthText = document.getElementById('health-text');
+        this.coinCount = document.getElementById('coin-count');
+        this.levelText = document.getElementById('level-text');
+        this.fpsCounter = document.getElementById('fps-counter');
+        this.positionDisplay = document.getElementById('position-display');
+        this.chatMessages = document.getElementById('chat-messages');
+        this.notificationEl = document.getElementById('notification');
+        this.notificationText = document.getElementById('notification-text');
+        this.minimapCanvas = document.getElementById('minimap-canvas');
+        this.minimapCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
+
+        this.notifTimer = null;
+        this.fpsFrames = 0;
+        this.fpsTime = 0;
+        this.currentFPS = 60;
+    }
+
+    initToolbar(blocks, blockTypes) {
+        if (!this.toolbarSlots) return;
+        this.toolbarSlots.innerHTML = '';
+
+        blocks.forEach((blockKey, index) => {
+            const slot = document.createElement('div');
+            slot.className = 'toolbar-slot' + (index === 0 ? ' active' : '');
+            slot.dataset.index = index;
+
+            const number = document.createElement('span');
+            number.className = 'slot-number';
+            number.textContent = index + 1;
+
+            const block = document.createElement('div');
+            block.className = 'slot-block';
+
+            const type = blockTypes[blockKey];
+            if (type) {
+                const color = '#' + type.color.toString(16).padStart(6, '0');
+                const topColor = type.topColor ? '#' + type.topColor.toString(16).padStart(6, '0') : color;
+                block.style.background = `linear-gradient(135deg, ${topColor}, ${color})`;
+
+                if (type.emissive) {
+                    block.style.boxShadow = `0 0 10px ${color}`;
+                }
+            }
+
+            const name = document.createElement('span');
+            name.className = 'slot-name';
+            name.textContent = type ? type.name : blockKey;
+
+            slot.appendChild(number);
+            slot.appendChild(block);
+            slot.appendChild(name);
+
+            slot.addEventListener('click', () => {
+                document.querySelectorAll('.toolbar-slot').forEach(s => s.classList.remove('active'));
+                slot.classList.add('active');
+                if (globalThis.game) {
+                    globalThis.game.building.selectSlot(index);
+                }
+            });
+
+            this.toolbarSlots.appendChild(slot);
+        });
+    }
+
+    selectToolbarSlot(index) {
+        const slots = document.querySelectorAll('.toolbar-slot');
+        slots.forEach(s => s.classList.remove('active'));
+        if (slots[index]) slots[index].classList.add('active');
+    }
+
+    updateHealth(health, maxHealth) {
+        if (this.healthBar) {
+            const pct = (health / maxHealth) * 100;
+            this.healthBar.style.width = pct + '%';
+
+            if (pct > 60) {
+                this.healthBar.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
+            } else if (pct > 30) {
+                this.healthBar.style.background = 'linear-gradient(90deg, #f39c12, #e67e22)';
+            } else {
+                this.healthBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            }
+        }
+        if (this.healthText) this.healthText.textContent = Math.floor(health);
+    }
+
+    updateCoins(count) {
+        if (this.coinCount) {
+            this.coinCount.textContent = count;
+            // Animate
+            this.coinCount.style.transform = 'scale(1.3)';
+            setTimeout(() => {
+                if (this.coinCount) this.coinCount.style.transform = 'scale(1)';
+            }, 150);
+        }
+    }
+
+    updateLevel(level) {
+        if (this.levelText) this.levelText.textContent = `Nível ${level}`;
+    }
+
+    updateFPS(dt) {
+        this.fpsFrames++;
+        this.fpsTime += dt;
+        if (this.fpsTime >= 0.5) {
+            this.currentFPS = Math.round(this.fpsFrames / this.fpsTime);
+            this.fpsFrames = 0;
+            this.fpsTime = 0;
+            if (this.fpsCounter) {
+                this.fpsCounter.textContent = `${this.currentFPS} FPS`;
+                this.fpsCounter.style.color = this.getFPSColor(this.currentFPS);
+            }
+        }
+    }
+
+    getFPSColor(fps) {
+        if (fps >= 50) return '#2ecc71';
+        if (fps >= 30) return '#f39c12';
+        return '#e74c3c';
+    }
+
+    updatePosition(x, y, z) {
+        if (this.positionDisplay) {
+            this.positionDisplay.textContent = `X: ${Math.round(x)} Y: ${Math.round(y)} Z: ${Math.round(z)}`;
+        }
+    }
+
+    addChatMessage(text, type = 'normal') {
+        if (!this.chatMessages) return;
+
+        const msg = document.createElement('div');
+        msg.className = `chat-msg ${type}`;
+        msg.textContent = text;
+        this.chatMessages.appendChild(msg);
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            msg.style.opacity = '0';
+            msg.style.transition = 'opacity 1s';
+            setTimeout(() => msg.remove(), 1000);
+        }, 10000);
+    }
+
+    showNotification(text, duration = 3000) {
+        if (this.notifTimer) clearTimeout(this.notifTimer);
+
+        if (this.notificationEl && this.notificationText) {
+            this.notificationText.textContent = text;
+            this.notificationEl.style.display = 'block';
+
+            this.notifTimer = setTimeout(() => {
+                this.notificationEl.style.display = 'none';
+            }, duration);
+        }
+    }
+
+    drawMinimapBlock(ctx, world, wx, wz, screenX, screenY, scale) {
+        const gy = world.getGroundHeight(wx, wz);
+        if (gy < 0) return;
+
+        const block = world.getBlock(wx, gy, wz);
+        if (!block) return;
+
+        const type = world.blockTypes[block.type];
+        ctx.fillStyle = type ? '#' + type.color.toString(16).padStart(6, '0') : '#555';
+        ctx.fillRect(screenX, screenY, scale, scale);
+    }
+
+    updateMinimap(playerPos, world) {
+        if (!this.minimapCtx) return;
+
+        const ctx = this.minimapCtx;
+        const w = this.minimapCanvas.width;
+        const h = this.minimapCanvas.height;
+        const scale = 2; // pixels per block
+
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, w, h);
+
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const px = Math.round(playerPos.x);
+        const pz = Math.round(playerPos.z);
+        const viewRadius = Math.floor(w / (2 * scale));
+
+        for (let dx = -viewRadius; dx <= viewRadius; dx++) {
+            for (let dz = -viewRadius; dz <= viewRadius; dz++) {
+                this.drawMinimapBlock(
+                    ctx, world, px + dx, pz + dz,
+                    centerX + dx * scale, centerY + dz * scale, scale
+                );
+            }
+        }
+
+        // Player dot
+        ctx.fillStyle = '#e94560';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Player direction
+        ctx.strokeStyle = '#e94560';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        // Would need player rotation here
+        ctx.stroke();
+
+        // Border
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, w, h);
+    }
+}

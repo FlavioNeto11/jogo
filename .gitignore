@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Playwright MCP
+.playwright-mcp/
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+*.min.js
+!three.min.js
+
+# Temporários
+*.tmp
+*.temp
+.cache/

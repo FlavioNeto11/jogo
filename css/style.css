@@ -1,0 +1,673 @@
+/* ============================================
+   BLOCKWORLD - Roblox-Style CSS
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    overflow: hidden;
+    background: #1a1a2e;
+    font-family: 'Nunito', sans-serif;
+    cursor: default;
+}
+
+#game-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-logo {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 30px;
+    position: relative;
+    animation: logoSpin 3s ease-in-out infinite;
+}
+
+.logo-block {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    animation: blockPulse 2s ease-in-out infinite;
+}
+
+.b1 { top: 0; left: 0; background: #e94560; animation-delay: 0s; }
+.b2 { top: 0; right: 0; background: #0f3460; animation-delay: 0.3s; }
+.b3 { bottom: 0; left: 0; background: #533483; animation-delay: 0.6s; }
+.b4 { bottom: 0; right: 0; background: #e94560; animation-delay: 0.9s; }
+
+@keyframes logoSpin {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+}
+
+@keyframes blockPulse {
+    0%, 100% { transform: scale(1); border-radius: 8px; }
+    50% { transform: scale(0.85); border-radius: 50%; }
+}
+
+.loading-content h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 48px;
+    color: white;
+    letter-spacing: 8px;
+    margin-bottom: 30px;
+    text-shadow: 0 4px 20px rgba(233, 69, 96, 0.5);
+}
+
+.loading-bar-container {
+    width: 300px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin: 0 auto 15px;
+    overflow: hidden;
+}
+
+.loading-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #e94560, #533483, #0f3460);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    background-size: 200% 100%;
+    animation: barShimmer 2s linear infinite;
+}
+
+@keyframes barShimmer {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+#loading-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+/* ============================================
+   MAIN MENU
+   ============================================ */
+#main-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 900;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.85), rgba(15, 52, 96, 0.85));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.menu-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px;
+}
+
+.menu-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 72px;
+    color: white;
+    letter-spacing: 10px;
+    margin-bottom: 10px;
+    text-shadow: 
+        0 4px 20px rgba(233, 69, 96, 0.6),
+        0 0 60px rgba(233, 69, 96, 0.3);
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% { text-shadow: 0 4px 20px rgba(233, 69, 96, 0.6), 0 0 60px rgba(233, 69, 96, 0.3); }
+    50% { text-shadow: 0 4px 30px rgba(233, 69, 96, 0.8), 0 0 80px rgba(233, 69, 96, 0.5); }
+}
+
+.menu-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    margin-bottom: 40px;
+}
+
+.menu-btn {
+    display: block;
+    width: 280px;
+    margin: 12px auto;
+    padding: 16px 32px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    letter-spacing: 1px;
+}
+
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.menu-btn.primary {
+    background: linear-gradient(135deg, #e94560, #c73e54);
+    border: 2px solid #e94560;
+    font-size: 22px;
+    padding: 18px 36px;
+}
+
+.menu-btn.primary:hover {
+    background: linear-gradient(135deg, #f25672, #e94560);
+    box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
+}
+
+.menu-btn.danger {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    border-color: #e74c3c;
+}
+
+.menu-btn .btn-icon {
+    margin-right: 8px;
+}
+
+.menu-footer {
+    margin-top: 40px;
+}
+
+.menu-footer p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    margin: 4px 0;
+}
+
+/* ============================================
+   SETTINGS MODAL
+   ============================================ */
+#settings-modal {
+    display: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 40px;
+    min-width: 400px;
+    z-index: 10;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+    font-family: 'Fredoka One', cursive;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-row label {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.setting-row input[type="range"] {
+    width: 150px;
+    accent-color: #e94560;
+}
+
+.setting-row select {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-family: 'Nunito', sans-serif;
+}
+
+/* ============================================
+   GAME HUD
+   ============================================ */
+#game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    pointer-events: none;
+    display: none;
+}
+
+#game-hud > * {
+    pointer-events: auto;
+}
+
+/* Top bar */
+.hud-top {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 24px;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hud-health {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.health-icon {
+    font-size: 22px;
+}
+
+.health-bar-bg {
+    width: 160px;
+    height: 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.health-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    border-radius: 7px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+#health-text {
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 30px;
+}
+
+.hud-coins, .hud-level {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.coin-icon, .level-icon {
+    font-size: 20px;
+}
+
+/* Crosshair */
+.crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+}
+
+.crosshair::before,
+.crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.crosshair::before {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    transform: translateY(-50%);
+}
+
+.crosshair::after {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+}
+
+.crosshair-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Toolbar */
+.hud-toolbar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toolbar-slots {
+    display: flex;
+    gap: 4px;
+}
+
+.toolbar-slot {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.toolbar-slot:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.toolbar-slot.active {
+    border-color: #e94560;
+    background: rgba(233, 69, 96, 0.2);
+    box-shadow: 0 0 15px rgba(233, 69, 96, 0.3);
+}
+
+.toolbar-slot .slot-number {
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 700;
+}
+
+.toolbar-slot .slot-icon {
+    font-size: 28px;
+}
+
+.toolbar-slot .slot-block {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-slot .slot-name {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    display: none;
+}
+
+.toolbar-slot:hover .slot-name {
+    display: block;
+}
+
+/* Minimap */
+.hud-minimap {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+
+#minimap-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Chat */
+.hud-chat {
+    position: absolute;
+    bottom: 100px;
+    left: 15px;
+    width: 350px;
+    max-height: 200px;
+    overflow-y: auto;
+    pointer-events: none;
+}
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chat-msg {
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    animation: chatFadeIn 0.3s ease;
+}
+
+.chat-msg.system {
+    color: #f1c40f;
+    font-style: italic;
+}
+
+.chat-msg.achievement {
+    background: rgba(233, 69, 96, 0.3);
+    border: 1px solid rgba(233, 69, 96, 0.5);
+    color: #ffffff;
+}
+
+@keyframes chatFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* FPS Counter */
+.hud-fps {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #2ecc71;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    font-family: monospace;
+}
+
+/* Position */
+.hud-position {
+    position: absolute;
+    top: 40px;
+    left: 15px;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    border-radius: 6px;
+    font-family: monospace;
+}
+
+/* Pause Button */
+.hud-pause-btn {
+    position: absolute;
+    top: 15px;
+    right: 185px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hud-pause-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 30px;
+    background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    z-index: 500;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    animation: notifSlide 0.3s ease;
+    display: none;
+}
+
+@keyframes notifSlide {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============================================
+   PAUSE MENU
+   ============================================ */
+#pause-menu {
+    z-index: 800;
+    display: none;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .menu-title { font-size: 42px; }
+    .toolbar-slot { width: 48px; height: 48px; }
+    .hud-minimap { display: none; }
+    .hud-chat { width: 250px; }
+}
