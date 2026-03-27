@@ -107,15 +107,16 @@ export class AudioSystem {
         if (!this.initialized) return;
         try {
             if (!this.ctx || !this.masterGain) return;
-            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const ctx = this.ctx;
+            if (ctx.state === 'suspended') ctx.resume();
 
-            const musicGain = this.ctx.createGain();
+            const musicGain = ctx.createGain();
             musicGain.gain.value = 0.06;
             musicGain.connect(this.masterGain);
 
             const playNote = (freq: number, startTime: number, dur: number): void => {
-                const osc = this.ctx.createOscillator();
-                const noteGain = this.ctx.createGain();
+                const osc = ctx.createOscillator();
+                const noteGain = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.value = freq;
                 noteGain.gain.setValueAtTime(0, startTime);
@@ -128,7 +129,7 @@ export class AudioSystem {
             };
 
             const melody = [262, 294, 330, 349, 392, 349, 330, 294];
-            const now = this.ctx.currentTime;
+            const now = ctx.currentTime;
             const loopDuration = melody.length * 0.8;
 
             const playLoop = (offset: number): void => {

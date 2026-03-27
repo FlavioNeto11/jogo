@@ -6,6 +6,43 @@ import Utils from './utils';
 import type { EntityUpdateResult } from './types';
 import type { World } from './world';
 
+type FamilyMember = 'flavio' | 'anapaula' | 'mafe' | 'julia';
+
+interface FamilyNPCConfig {
+    name: string;
+    skinColor: number;
+    shirtColor: number;
+    pantsColor: number;
+    hairColor: number | null;
+    hasBeard: boolean;
+    beardColor?: number;
+    longHair?: boolean;
+    hasBow?: boolean;
+    hasBangs?: boolean;
+    scale: number;
+    dialogues: string[];
+}
+
+interface NPCUserData {
+    family?: FamilyMember;
+    idleTimer: number;
+    isIdle: boolean;
+    walkTimer: number;
+    walkDuration: number;
+    walkDir: THREE.Vector3;
+    leftArm?: THREE.Mesh;
+    rightArm?: THREE.Mesh;
+    leftLeg?: THREE.Mesh;
+    rightLeg?: THREE.Mesh;
+    heart?: THREE.Mesh;
+    startPos: THREE.Vector3;
+    speed: number;
+    wanderRadius: number;
+    dialogues: string[];
+    lastDialogueTime: number;
+    dialogueCooldown: number;
+}
+
 export class EntitySystem {
     scene: THREE.Scene;
     world: World;
@@ -80,11 +117,11 @@ export class EntitySystem {
         const size = this.world.worldSize;
 
         // Spawn family members near the center
-        const familyMembers = [
-            { name: 'Papai Flávio', create: (x,y,z) => this.createFamilyNPC(x,y,z, 'flavio') },
-            { name: 'Mamãe Ana Paula', create: (x,y,z) => this.createFamilyNPC(x,y,z, 'anapaula') },
-            { name: 'Maria Fernanda', create: (x,y,z) => this.createFamilyNPC(x,y,z, 'mafe') },
-            { name: 'Juju', create: (x,y,z) => this.createFamilyNPC(x,y,z, 'julia') },
+        const familyMembers: Array<{ name: string; create: (x: number, y: number, z: number) => void }> = [
+            { name: 'Papai Flávio', create: (x: number, y: number, z: number) => this.createFamilyNPC(x, y, z, 'flavio') },
+            { name: 'Mamãe Ana Paula', create: (x: number, y: number, z: number) => this.createFamilyNPC(x, y, z, 'anapaula') },
+            { name: 'Maria Fernanda', create: (x: number, y: number, z: number) => this.createFamilyNPC(x, y, z, 'mafe') },
+            { name: 'Juju', create: (x: number, y: number, z: number) => this.createFamilyNPC(x, y, z, 'julia') },
         ];
 
         const positions = [{x:5,z:3},{x:-4,z:6},{x:7,z:-5},{x:-6,z:-3}];
@@ -106,11 +143,11 @@ export class EntitySystem {
         }
     }
 
-    createFamilyNPC(x: number, y: number, z: number, member: 'flavio' | 'anapaula' | 'mafe' | 'julia'): void {
+    createFamilyNPC(x: number, y: number, z: number, member: FamilyMember): void {
         const group = new THREE.Group();
 
         // Family member configs based on real photos
-        const configs = {
+        const configs: Record<FamilyMember, FamilyNPCConfig> = {
             flavio: {
                 name: '💪 Papai Flávio',
                 skinColor: 0xD4A574, // tom mais bronzeado
@@ -195,7 +232,7 @@ export class EntitySystem {
             }
         };
 
-        const cfg = (configs as Record<string, any>)[member];
+        const cfg = configs[member];
         const s = cfg.scale;
 
         // Head
@@ -336,6 +373,7 @@ export class EntitySystem {
         nameCanvas.width = 256;
         nameCanvas.height = 64;
         const ctx = nameCanvas.getContext('2d');
+        if (!ctx) return;
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         // roundRect polyfill (not available in all browsers)
         if (ctx.roundRect) {
@@ -480,12 +518,13 @@ export class EntitySystem {
         this.npcs.push(group);
     }
 
-    getHeartScale(family?: string): number {
-        const scales = { flavio: 1.15, mafe: 0.9, julia: 0.65 };
-        return scales[family] || 1;
+    getHeartScale(family?: FamilyMember): number {
+        const scales: Record<Exclude<FamilyMember, 'anapaula'>, number> = { flavio: 1.15, mafe: 0.9, julia: 0.65 };
+        if (!family || family === 'anapaula') return 1;
+        return scales[family];
     }
 
-    updateNPCIdle(data: any, dt: number, time: number): void {
+    updateNPCIdle(data: NPCUserData, dt: number, time: number): void {
         data.idleTimer += dt;
         if (data.idleTimer > Utils.randomRange(1, 3)) {
             data.isIdle = false;
@@ -501,7 +540,7 @@ export class EntitySystem {
         if (data.rightArm) data.rightArm.rotation.x = -idle;
     }
 
-    updateNPCWalking(npc: THREE.Group, data: any, dt: number, time: number): void {
+    updateNPCWalking(npc: THREE.Group, data: NPCUserData, dt: number, time: number): void {
         data.walkTimer += dt;
 
         const moveX = data.walkDir.x * data.speed * dt;
@@ -541,7 +580,7 @@ export class EntitySystem {
     }
 
     updateSingleNPC(npc: THREE.Group, time: number, dt: number, playerPos: THREE.Vector3, dialogueMessages: string[]): void {
-        const data = npc.userData;
+        const data = npc.userData as NPCUserData;
         const distToPlayer = Utils.distance3D(npc.position, playerPos);
 
         if (distToPlayer < 6) {
@@ -594,7 +633,7 @@ export class EntitySystem {
         this.coins = this.coins.filter(c => !c.userData.collected);
 
         // NPC dialogue triggers
-        const dialogueMessages = [];
+        const dialogueMessages: string[] = [];
 
         // Update NPCs
         this.npcs.forEach(npc => {

@@ -60,6 +60,14 @@ export class Game {
     clouds: THREE.Group[] = [];
     ambientParticles: THREE.Mesh[] = [];
 
+    private getRequiredElement<T extends HTMLElement>(id: string): T {
+        const element = document.getElementById(id);
+        if (!element) {
+            throw new Error(`Elemento obrigatório não encontrado: ${id}`);
+        }
+        return element as T;
+    }
+
     constructor() {
         this.canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
         this.state = 'loading'; // loading, menu, playing, paused
@@ -276,6 +284,7 @@ export class Game {
     }
 
     createSunVisual(): void {
+        if (!this.sunLight) return;
         const sunGeo = new THREE.SphereGeometry(8, 12, 12);
         const sunMat = new THREE.MeshBasicMaterial({
             color: 0xFFF9C4,
@@ -397,11 +406,12 @@ export class Game {
 
     handleBlockPlace(): void {
         if (this.building.placeBlock(this.camera, this.character, this.physics)) {
+            const ghost = this.building.ghostBlock;
             this.audio.play('place');
             this.particles.emit(
-                this.building.ghostBlock.position.x,
-                this.building.ghostBlock.position.y,
-                this.building.ghostBlock.position.z,
+                ghost.position.x,
+                ghost.position.y,
+                ghost.position.z,
                 'block',
                 this.world.blockTypes[this.building.selectedBlockType]?.color || 0xffffff,
                 5
@@ -421,11 +431,11 @@ export class Game {
         document.getElementById('btn-play')?.addEventListener('click', () => this.startGame());
 
         document.getElementById('btn-settings')?.addEventListener('click', () => {
-            document.getElementById('settings-modal').style.display = 'block';
+            this.getRequiredElement<HTMLElement>('settings-modal').style.display = 'block';
         });
 
         document.getElementById('btn-close-settings')?.addEventListener('click', () => {
-            document.getElementById('settings-modal').style.display = 'none';
+            this.getRequiredElement<HTMLElement>('settings-modal').style.display = 'none';
             this.applySettings();
         });
 
@@ -433,7 +443,7 @@ export class Game {
         document.getElementById('btn-resume')?.addEventListener('click', () => this.resume());
 
         document.getElementById('btn-pause-settings')?.addEventListener('click', () => {
-            document.getElementById('settings-modal').style.display = 'block';
+            this.getRequiredElement<HTMLElement>('settings-modal').style.display = 'block';
         });
 
         document.getElementById('btn-quit')?.addEventListener('click', () => this.quitToMenu());
@@ -474,7 +484,7 @@ export class Game {
         const loadingBar = document.getElementById('loading-bar');
         const loadingText = document.getElementById('loading-text');
 
-        const setProgress = (pct, text) => {
+        const setProgress = (pct: number, text: string): void => {
             if (loadingBar) loadingBar.style.width = pct + '%';
             if (loadingText) loadingText.textContent = text;
         };
@@ -516,8 +526,8 @@ export class Game {
         setProgress(100, 'Pronto!');
         await this.sleep(500);
 
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('main-menu').style.display = 'flex';
+        this.getRequiredElement<HTMLElement>('loading-screen').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('main-menu').style.display = 'flex';
         this.state = 'menu';
 
         this.camera.position.set(0, 30, 40);
@@ -530,8 +540,8 @@ export class Game {
     }
 
     startGame(): void {
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('game-hud').style.display = 'block';
+        this.getRequiredElement<HTMLElement>('main-menu').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('game-hud').style.display = 'block';
         this.state = 'playing';
 
         this.audio.init();
@@ -550,22 +560,22 @@ export class Game {
 
     pause(): void {
         this.state = 'paused';
-        document.getElementById('pause-menu').style.display = 'block';
+        this.getRequiredElement<HTMLElement>('pause-menu').style.display = 'block';
         document.exitPointerLock();
     }
 
     resume(): void {
         this.state = 'playing';
-        document.getElementById('pause-menu').style.display = 'none';
-        document.getElementById('settings-modal').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('pause-menu').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('settings-modal').style.display = 'none';
         this.canvas.requestPointerLock();
     }
 
     quitToMenu(): void {
         this.state = 'menu';
-        document.getElementById('pause-menu').style.display = 'none';
-        document.getElementById('game-hud').style.display = 'none';
-        document.getElementById('main-menu').style.display = 'flex';
+        this.getRequiredElement<HTMLElement>('pause-menu').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('game-hud').style.display = 'none';
+        this.getRequiredElement<HTMLElement>('main-menu').style.display = 'flex';
         document.exitPointerLock();
         this.camera.position.set(0, 30, 40);
         this.camera.lookAt(0, 5, 0);

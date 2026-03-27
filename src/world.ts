@@ -392,7 +392,7 @@ export class World {
             const block = this.getBlock(bx, by, bz);
             if (block && block !== 'water') {
                 // placePosition = previous empty voxel the ray was in
-                const place: Vec3 = (prevX === null)
+                const place: Vec3 = (prevX === null || prevY === null || prevZ === null)
                     ? { x: bx, y: by + 1, z: bz }
                     : { x: prevX, y: prevY, z: prevZ };
                 return {

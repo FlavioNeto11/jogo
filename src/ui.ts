@@ -44,7 +44,8 @@ export class UISystem {
 
     initToolbar(blocks: string[], blockTypes: Record<string, BlockType>) {
         if (!this.toolbarSlots) return;
-        this.toolbarSlots.innerHTML = '';
+        const toolbar = this.toolbarSlots;
+        toolbar.innerHTML = '';
 
         blocks.forEach((blockKey, index) => {
             const slot = document.createElement('div');
@@ -86,7 +87,7 @@ export class UISystem {
                 }
             });
 
-            this.toolbarSlots.appendChild(slot);
+            toolbar.appendChild(slot);
         });
     }
 
@@ -174,11 +175,12 @@ export class UISystem {
         if (this.notifTimer) clearTimeout(this.notifTimer);
 
         if (this.notificationEl && this.notificationText) {
+            const notificationEl = this.notificationEl;
             this.notificationText.textContent = text;
-            this.notificationEl.style.display = 'block';
+            notificationEl.style.display = 'block';
 
             this.notifTimer = setTimeout(() => {
-                this.notificationEl.style.display = 'none';
+                notificationEl.style.display = 'none';
             }, duration);
         }
     }
@@ -196,11 +198,12 @@ export class UISystem {
     }
 
     updateMinimap(playerPos: Vec3, world: World): void {
-        if (!this.minimapCtx) return;
+        if (!this.minimapCtx || !this.minimapCanvas) return;
 
         const ctx = this.minimapCtx;
-        const w = this.minimapCanvas.width;
-        const h = this.minimapCanvas.height;
+        const canvas = this.minimapCanvas;
+        const w = canvas.width;
+        const h = canvas.height;
         const scale = 2; // pixels per block
 
         ctx.fillStyle = '#1a1a2e';

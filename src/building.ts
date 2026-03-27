@@ -10,16 +10,15 @@ export class BuildingSystem {
     world: World;
     scene: THREE.Scene;
     selectedBlockType: string;
-    ghostBlock: THREE.Mesh | null;
+    ghostBlock!: THREE.Mesh;
     toolbarBlocks: string[];
     selectedSlot: number;
-    highlightBox: THREE.LineSegments | null = null;
+    highlightBox!: THREE.LineSegments;
 
     constructor(world: World, scene: THREE.Scene) {
         this.world = world;
         this.scene = scene;
         this.selectedBlockType = 'brick';
-        this.ghostBlock = null;
         this.toolbarBlocks = [
             'brick', 'planks', 'stone', 'cobblestone', 'wood',
             'glass', 'gold', 'neon_pink', 'neon_blue'
