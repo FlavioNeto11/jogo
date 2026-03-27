@@ -1,17 +1,17 @@
 // ============================================
 // AUDIO SYSTEM
 // ============================================
-class AudioSystem {
-    ctx = null;
-    masterGain = null;
+export class AudioSystem {
+    ctx: AudioContext | null = null;
+    masterGain: GainNode | null = null;
     volume = 0.7;
-    sounds = {};
-    music = null;
+    sounds: Record<string, AudioBuffer | null> = {};
+    music: null = null;
     initialized = false;
 
-    init() {
+    init(): void {
         try {
-            this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
+            this.ctx = new (globalThis.AudioContext || (globalThis as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
             this.masterGain = this.ctx.createGain();
             this.masterGain.gain.value = this.volume;
             this.masterGain.connect(this.ctx.destination);
@@ -22,14 +22,14 @@ class AudioSystem {
         }
     }
 
-    setVolume(v) {
+    setVolume(v: number): void {
         this.volume = v;
         if (this.masterGain) {
             this.masterGain.gain.value = v;
         }
     }
 
-    generateSounds() {
+    generateSounds(): void {
         // Pre-generate common sounds
         this.sounds.jump = this.createToneBuffer(440, 0.15, 'sine', 0.3);
         this.sounds.land = this.createToneBuffer(180, 0.1, 'sine', 0.2);
@@ -42,10 +42,10 @@ class AudioSystem {
         this.sounds.achievement = this.createChimeBuffer();
     }
 
-    createToneBuffer(freq, duration, type, vol) {
+    createToneBuffer(freq: number, duration: number, type: OscillatorType, vol: number): AudioBuffer | null {
         if (!this.ctx) return null;
         const sr = this.ctx.sampleRate;
-        const length = sr * duration;
+        const length = Math.floor(sr * duration);
         const buffer = this.ctx.createBuffer(1, length, sr);
         const data = buffer.getChannelData(0);
 
@@ -64,11 +64,11 @@ class AudioSystem {
         return buffer;
     }
 
-    createChimeBuffer() {
+    createChimeBuffer(): AudioBuffer | null {
         if (!this.ctx) return null;
         const sr = this.ctx.sampleRate;
         const duration = 0.5;
-        const length = sr * duration;
+        const length = Math.floor(sr * duration);
         const buffer = this.ctx.createBuffer(1, length, sr);
         const data = buffer.getChannelData(0);
 
@@ -88,9 +88,10 @@ class AudioSystem {
         return buffer;
     }
 
-    play(name) {
+    play(name: string): void {
         if (!this.initialized || !this.sounds[name]) return;
         try {
+            if (!this.ctx || !this.masterGain) return;
             if (this.ctx.state === 'suspended') this.ctx.resume();
             const source = this.ctx.createBufferSource();
             source.buffer = this.sounds[name];
@@ -101,17 +102,18 @@ class AudioSystem {
         }
     }
 
-    playMusic() {
+    playMusic(): void {
         // Ambient background with oscillators
         if (!this.initialized) return;
         try {
+            if (!this.ctx || !this.masterGain) return;
             if (this.ctx.state === 'suspended') this.ctx.resume();
 
             const musicGain = this.ctx.createGain();
             musicGain.gain.value = 0.06;
             musicGain.connect(this.masterGain);
 
-            const playNote = (freq, startTime, dur) => {
+            const playNote = (freq: number, startTime: number, dur: number): void => {
                 const osc = this.ctx.createOscillator();
                 const noteGain = this.ctx.createGain();
                 osc.type = 'sine';
@@ -129,7 +131,7 @@ class AudioSystem {
             const now = this.ctx.currentTime;
             const loopDuration = melody.length * 0.8;
 
-            const playLoop = (offset) => {
+            const playLoop = (offset: number): void => {
                 melody.forEach((freq, i) => {
                     playNote(freq, now + offset + i * 0.8, 0.7);
                 });

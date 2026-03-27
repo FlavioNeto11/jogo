@@ -1,14 +1,22 @@
 // ============================================
 // PARTICLE SYSTEM
 // ============================================
-class ParticleSystem {
-    constructor(scene) {
+import * as THREE from 'three';
+import Utils from './utils';
+import type { ParticleData } from './types';
+
+export class ParticleSystem {
+    scene: THREE.Scene;
+    particles: THREE.Mesh[];
+    pools: Record<string, unknown>;
+
+    constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.particles = [];
         this.pools = {};
     }
 
-    emit(x, y, z, type = 'block', color = 0xffffff, count = 8) {
+    emit(x: number, y: number, z: number, _type = 'block', color = 0xffffff, count = 8): void {
         for (let i = 0; i < count; i++) {
             const size = Utils.randomRange(0.05, 0.15);
             const geo = new THREE.BoxGeometry(size, size, size);
@@ -40,7 +48,7 @@ class ParticleSystem {
         }
     }
 
-    emitCoinCollect(x, y, z) {
+    emitCoinCollect(x: number, y: number, z: number): void {
         // Golden sparkle particles
         for (let i = 0; i < 15; i++) {
             const size = Utils.randomRange(0.03, 0.1);
@@ -78,7 +86,7 @@ class ParticleSystem {
         }
     }
 
-    emitJump(x, y, z) {
+    emitJump(x: number, y: number, z: number): void {
         for (let i = 0; i < 6; i++) {
             const size = Utils.randomRange(0.05, 0.12);
             const geo = new THREE.BoxGeometry(size, size, size);
@@ -113,7 +121,7 @@ class ParticleSystem {
         }
     }
 
-    emitLand(x, y, z) {
+    emitLand(x: number, y: number, z: number): void {
         for (let i = 0; i < 10; i++) {
             const size = Utils.randomRange(0.04, 0.1);
             const geo = new THREE.BoxGeometry(size, size, size);
@@ -148,17 +156,17 @@ class ParticleSystem {
         }
     }
 
-    update(dt) {
+    update(dt: number): void {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
-            const data = p.userData;
+            const data = p.userData as ParticleData;
 
             data.life -= dt;
 
             if (data.life <= 0) {
                 this.scene.remove(p);
                 p.geometry.dispose();
-                p.material.dispose();
+                (p.material as THREE.Material).dispose();
                 this.particles.splice(i, 1);
                 continue;
             }
@@ -174,8 +182,9 @@ class ParticleSystem {
 
             // Fade out
             const lifeRatio = data.life / data.maxLife;
-            if (p.material.opacity !== undefined) {
-                p.material.opacity = lifeRatio;
+            const mat = p.material as THREE.MeshLambertMaterial;
+            if (mat.opacity !== undefined) {
+                mat.opacity = lifeRatio;
             }
 
             // Shrink
@@ -184,7 +193,7 @@ class ParticleSystem {
         }
     }
 
-    getCount() {
+    getCount(): number {
         return this.particles.length;
     }
 }

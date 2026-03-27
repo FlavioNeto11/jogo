@@ -1,8 +1,40 @@
 // ============================================
 // CHARACTER (Roblox-style blocky character)
 // ============================================
-class Character {
-    constructor(scene) {
+import * as THREE from 'three';
+import Utils from './utils';
+import type { AABB } from './types';
+
+export class Character {
+    scene: THREE.Scene;
+    group: THREE.Group;
+    position: THREE.Vector3;
+    velocity: THREE.Vector3;
+    rotation: { x: number; y: number };
+    width: number;
+    height: number;
+    depth: number;
+    speed: number;
+    sprintMultiplier: number;
+    jumpForce: number;
+    gravity: number;
+    onGround: boolean;
+    isSprinting: boolean;
+    isMoving: boolean;
+    canDoubleJump: boolean;
+    hasDoubleJumped: boolean;
+    health: number;
+    maxHealth: number;
+    coins: number;
+    level: number;
+    xp: number;
+    xpToLevel: number;
+    walkCycle: number;
+    bobAmount: number;
+    headBob: number;
+    bodyParts: Record<string, THREE.Object3D>;
+
+    constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.group = new THREE.Group();
         this.position = new THREE.Vector3(0, 8, 0);
@@ -45,7 +77,7 @@ class Character {
         scene.add(this.group);
     }
 
-    createModel() {
+    createModel(): void {
         // Roblox-style character with smooth, colored parts
         const skinColor = 0xFFD1A4;
         const shirtColor = 0x2196F3;
@@ -164,7 +196,7 @@ class Character {
         this.group.add(shadow);
     }
 
-    animate(dt, isMoving) {
+    animate(dt: number, isMoving: boolean): void {
         this.isMoving = isMoving;
 
         if (isMoving && this.onGround) {
@@ -211,16 +243,16 @@ class Character {
         this.group.rotation.y = this.rotation.y;
     }
 
-    takeDamage(amount) {
+    takeDamage(amount: number): boolean {
         this.health = Math.max(0, this.health - amount);
         return this.health <= 0;
     }
 
-    heal(amount) {
+    heal(amount: number): void {
         this.health = Math.min(this.maxHealth, this.health + amount);
     }
 
-    addXP(amount) {
+    addXP(amount: number): boolean {
         this.xp += amount;
         if (this.xp >= this.xpToLevel) {
             this.xp -= this.xpToLevel;
@@ -231,13 +263,13 @@ class Character {
         return false;
     }
 
-    collectCoin() {
+    collectCoin(): boolean {
         this.coins++;
         const leveled = this.addXP(10);
         return leveled;
     }
 
-    getAABB() {
+    getAABB(): AABB {
         return {
             min: {
                 x: this.position.x - this.width / 2,

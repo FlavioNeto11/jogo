@@ -1,8 +1,25 @@
 // ============================================
 // WORLD (Optimized with InstancedMesh)
 // ============================================
-class World {
-    constructor(scene) {
+import * as THREE from 'three';
+import Utils from './utils';
+import type { BlockType, RaycastHit, Vec3 } from './types';
+
+export class World {
+    scene: THREE.Scene;
+    worldSize: number;
+    waterLevel: number;
+    blocks: Map<string, string>;
+    dynamicMeshes: Map<string, THREE.Mesh>;
+    instancedMeshes: THREE.InstancedMesh[];
+    sharedGeo: THREE.BoxGeometry;
+    blockTypes: Record<string, BlockType>;
+    materials: Record<string, THREE.MeshLambertMaterial>;
+    waterPlane: THREE.Mesh | null = null;
+    seabedPlane: THREE.Mesh | null = null;
+    _needsRebuild = false;
+
+    constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.worldSize = 64;
         this.waterLevel = 1;
@@ -35,7 +52,7 @@ class World {
         // Pre-build materials (MeshLambertMaterial = much cheaper)
         this.materials = {};
         for (const [key, bt] of Object.entries(this.blockTypes)) {
-            const opts = { color: bt.color };
+            const opts: THREE.MeshLambertMaterialParameters = { color: bt.color };
             if (key === 'water') {
                 opts.transparent = true;
                 opts.opacity = 0.55;
@@ -56,16 +73,16 @@ class World {
     }
 
     // ---- helpers ----
-    key(x, y, z) { return `${x},${y},${z}`; }
+    key(x: number, y: number, z: number): string { return `${x},${y},${z}`; }
 
-    getBlock(x, y, z) { return this.blocks.get(this.key(x, y, z)) || null; }
+    getBlock(x: number, y: number, z: number): string | null { return this.blocks.get(this.key(x, y, z)) || null; }
 
-    setBlockData(x, y, z, type) {
+    setBlockData(x: number, y: number, z: number, type: string): void {
         this.blocks.set(this.key(x, y, z), type);
     }
 
     // ---- Dynamic blocks (player-placed) ----
-    addDynamicBlock(x, y, z, type) {
+    addDynamicBlock(x: number, y: number, z: number, type: string): void {
         const k = this.key(x, y, z);
         this.blocks.set(k, type);
         const mat = this.materials[type] || this.materials.stone;
@@ -78,7 +95,7 @@ class World {
         this.dynamicMeshes.set(k, mesh);
     }
 
-    removeDynamicBlock(x, y, z) {
+    removeDynamicBlock(x: number, y: number, z: number): void {
         const k = this.key(x, y, z);
         const mesh = this.dynamicMeshes.get(k);
         if (mesh) {
@@ -88,7 +105,7 @@ class World {
         this.blocks.delete(k);
     }
 
-    removeBlock(x, y, z) {
+    removeBlock(x: number, y: number, z: number): void {
         const k = this.key(x, y, z);
         if (this.dynamicMeshes.has(k)) {
             this.removeDynamicBlock(x, y, z);
@@ -100,21 +117,20 @@ class World {
     }
 
     // Alias used by building system
-    setBlock(x, y, z, type) {
+    setBlock(x: number, y: number, z: number, type: string): void {
         this.addDynamicBlock(x, y, z, type);
     }
 
     // ---- Instanced mesh rebuild (called once after generation) ----
-    rebuildInstanced() {
+    rebuildInstanced(): void {
         // Remove old instanced meshes
         for (const im of this.instancedMeshes) {
             this.scene.remove(im);
-            im.dispose();
         }
         this.instancedMeshes = [];
 
         // Bucket blocks by type (skip dynamic ones)
-        const buckets = {};
+        const buckets: Record<string, string[]> = {};
         for (const [k, type] of this.blocks.entries()) {
             if (this.dynamicMeshes.has(k)) continue;
             if (!buckets[type]) buckets[type] = [];
@@ -123,7 +139,7 @@ class World {
 
         const dummy = new THREE.Object3D();
 
-        for (const [type, keys] of Object.entries(buckets)) {
+        for (const [type, keys] of Object.entries(buckets) as [string, string[]][]) {
             const mat = this.materials[type] || this.materials.stone;
             const im = new THREE.InstancedMesh(this.sharedGeo, mat, keys.length);
             im.castShadow = (type !== 'water');
@@ -143,7 +159,7 @@ class World {
     }
 
     // ---- Generation ----
-    generate(onProgress) {
+    generate(onProgress?: (progress: number, message: string) => void): void {
         onProgress?.(0, 'Gerando terreno...');
         this.generateTerrain();
         onProgress?.(0.3, 'Criando água...');
@@ -157,7 +173,7 @@ class World {
         onProgress?.(1, 'Mundo pronto!');
     }
 
-    generateTerrain() {
+    generateTerrain(): void {
         const half = this.worldSize / 2;
         for (let x = -half; x < half; x++) {
             for (let z = -half; z < half; z++) {
@@ -166,7 +182,7 @@ class World {
         }
     }
 
-    generateTerrainColumn(x, z) {
+    generateTerrainColumn(x: number, z: number): void {
         const n = Utils.fbm(x * 0.018, z * 0.018, 4, 2, 0.5);
         let h = Math.floor(4 + (n - 0.35) * 18);
         if (h < 0) h = 0;
@@ -187,7 +203,7 @@ class World {
         }
     }
 
-    getTerrainType(h) {
+    getTerrainType(h: number): string {
         if (h <= this.waterLevel) return 'sand';
         if (h === this.waterLevel + 1) return Math.random() < 0.5 ? 'sand' : 'grass';
         if (h > 12) return 'snow';
@@ -195,7 +211,7 @@ class World {
         return 'grass';
     }
 
-    generateWater() {
+    generateWater(): void {
         // Create a single flat water plane instead of individual blocks
         const size = this.worldSize;
         const waterGeo = new THREE.PlaneGeometry(size, size);
@@ -233,7 +249,7 @@ class World {
         }
     }
 
-    getSurfaceY(x, z) {
+    getSurfaceY(x: number, z: number): number | null {
         for (let y = 30; y >= -5; y--) {
             const b = this.blocks.get(this.key(x, y, z));
             if (b && b !== 'water') return y;
@@ -241,7 +257,7 @@ class World {
         return null;
     }
 
-    generateTrees() {
+    generateTrees(): void {
         const half = this.worldSize / 2;
         for (let x = -half + 4; x < half - 4; x += 7) {
             for (let z = -half + 4; z < half - 4; z += 7) {
@@ -256,7 +272,7 @@ class World {
         }
     }
 
-    createTree(x, y, z) {
+    createTree(x: number, y: number, z: number): void {
         const height = Utils.randomInt(3, 5);
         // Trunk
         for (let i = 0; i < height; i++) {
@@ -275,14 +291,14 @@ class World {
         this.setBlockData(x, top + 2, z, 'leaves');
     }
 
-    generateStructures() {
+    generateStructures(): void {
         this.createSpawnPlatform();
         // A couple of houses
         this.createHouse(12, 8);
         this.createHouse(-15, -10);
     }
 
-    createSpawnPlatform() {
+    createSpawnPlatform(): void {
         // Ensure platform is always above water level
         const minY = this.waterLevel + 2;
         for (let x = -3; x <= 3; x++) {
@@ -304,7 +320,7 @@ class World {
         this.setBlockData(3, cornerY + 1, 3, 'neon_blue');
     }
 
-    createHouse(bx, bz) {
+    createHouse(bx: number, bz: number): void {
         const gy = this.getGroundHeight(bx, bz);
         if (gy <= this.waterLevel) return;
         const base = gy + 1;
@@ -314,13 +330,13 @@ class World {
         this.buildHouseRoof(bx, bz, base, w, d, h);
     }
 
-    buildHouseWalls(bx, bz, base, w, d, h) {
+    buildHouseWalls(bx: number, bz: number, base: number, w: number, d: number, h: number): void {
         for (let y = 0; y < h; y++) {
             this.buildHouseLayer(bx, bz, base, w, d, y);
         }
     }
 
-    buildHouseLayer(bx, bz, base, w, d, y) {
+    buildHouseLayer(bx: number, bz: number, base: number, w: number, d: number, y: number): void {
         for (let x = 0; x < w; x++) {
             for (let z = 0; z < d; z++) {
                 if (this.isHouseOpening(x, z, y, w, d)) continue;
@@ -333,13 +349,13 @@ class World {
         }
     }
 
-    isHouseOpening(x, z, y, w, _d) {
+    isHouseOpening(x: number, z: number, y: number, w: number, _d: number): boolean {
         const isDoor = (x === Math.floor(w / 2) && z === 0 && y < 2);
         const isWindow = (y === 1 && ((x === 1 && z === 0) || (x === w - 2 && z === 0)));
         return isDoor || isWindow;
     }
 
-    buildHouseRoof(bx, bz, base, w, d, h) {
+    buildHouseRoof(bx: number, bz: number, base: number, w: number, d: number, h: number): void {
         for (let x = -1; x <= w; x++) {
             for (let z = -1; z <= d; z++) {
                 this.setBlockData(bx + x, base + h, bz + z, 'roof');
@@ -348,7 +364,7 @@ class World {
     }
 
     // ---- Query helpers ----
-    getGroundHeight(x, z) {
+    getGroundHeight(x: number, z: number): number {
         for (let y = 30; y >= -5; y--) {
             const b = this.blocks.get(this.key(x, y, z));
             if (b && b !== 'water' && b !== 'flower_red' && b !== 'flower_yellow') return y;
@@ -356,11 +372,11 @@ class World {
         return 0;
     }
 
-    getBlockCount() {
+    getBlockCount(): number {
         return this.blocks.size;
     }
 
-    raycastBlock(origin, direction, maxDist = 8) {
+    raycastBlock(origin: THREE.Vector3, direction: THREE.Vector3, maxDist = 8): RaycastHit | null {
         const dir = direction.clone().normalize();
         const pos = origin.clone();
         const step = 0.1;
@@ -376,7 +392,7 @@ class World {
             const block = this.getBlock(bx, by, bz);
             if (block && block !== 'water') {
                 // placePosition = previous empty voxel the ray was in
-                const place = (prevX === null)
+                const place: Vec3 = (prevX === null)
                     ? { x: bx, y: by + 1, z: bz }
                     : { x: prevX, y: prevY, z: prevZ };
                 return {

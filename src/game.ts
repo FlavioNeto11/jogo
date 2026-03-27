@@ -1,23 +1,75 @@
 // ============================================
 // MAIN GAME ENGINE (Optimized)
 // ============================================
-class Game {
+import * as THREE from 'three';
+import './style.css';
+import Utils from './utils';
+import { AudioSystem } from './audio';
+import { World } from './world';
+import { Character } from './character';
+import { Physics } from './physics';
+import { BuildingSystem } from './building';
+import { EntitySystem } from './entities';
+import { ParticleSystem } from './particles';
+import { UISystem } from './ui';
+import type { GameSettings, GameState } from './types';
+
+export class Game {
+    canvas: HTMLCanvasElement;
+    state: GameState;
+
+    renderer: THREE.WebGLRenderer;
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+
+    world!: World;
+    character!: Character;
+    physics!: Physics;
+    building!: BuildingSystem;
+    entities!: EntitySystem;
+    particles!: ParticleSystem;
+    audio: AudioSystem;
+    ui: UISystem;
+
+    cameraMode: 'first' | 'third';
+    cameraDistance: number;
+    cameraHeight: number;
+    cameraPitch: number;
+    cameraYaw: number;
+    cameraTarget: THREE.Vector3;
+    cameraSmoothPos: THREE.Vector3;
+
+    keys: Record<string, boolean>;
+    mouse: { x: number; y: number; dx: number; dy: number };
+    sensitivity: number;
+    isPointerLocked: boolean;
+
+    clock: THREE.Clock;
+    lastTime: number;
+    accumulator: number;
+    fixedDT: number;
+
+    settings: GameSettings;
+
+    stepTimer: number;
+    stepInterval: number;
+    wasOnGround: boolean;
+
+    sunLight: THREE.DirectionalLight | null = null;
+    sky: THREE.Mesh | null = null;
+    clouds: THREE.Group[] = [];
+    ambientParticles: THREE.Mesh[] = [];
+
     constructor() {
-        this.canvas = document.getElementById('game-canvas');
+        this.canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
         this.state = 'loading'; // loading, menu, playing, paused
 
         // Three.js
-        this.renderer = null;
-        this.scene = null;
-        this.camera = null;
+        this.renderer = {} as THREE.WebGLRenderer;
+        this.scene = {} as THREE.Scene;
+        this.camera = {} as THREE.PerspectiveCamera;
 
         // Systems
-        this.world = null;
-        this.character = null;
-        this.physics = null;
-        this.building = null;
-        this.entities = null;
-        this.particles = null;
         this.audio = new AudioSystem();
         this.ui = new UISystem();
 
@@ -56,7 +108,7 @@ class Game {
         this.wasOnGround = false;
     }
 
-    async init() {
+    async init(): Promise<void> {
         this.setupRenderer();
         this.setupScene();
         this.setupLighting();
@@ -69,7 +121,7 @@ class Game {
         await this.load();
     }
 
-    setupRenderer() {
+    setupRenderer(): void {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: false,          // PERF: disabled
@@ -82,7 +134,7 @@ class Game {
         this.renderer.shadowMap.type = THREE.BasicShadowMap;  // PERF: cheaper shadows
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.1;
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
         window.addEventListener('resize', () => {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -91,7 +143,7 @@ class Game {
         });
     }
 
-    setupScene() {
+    setupScene(): void {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(
             70, window.innerWidth / window.innerHeight, 0.1, 300
@@ -99,7 +151,7 @@ class Game {
         this.camera.position.set(0, 15, 10);
     }
 
-    setupLighting() {
+    setupLighting(): void {
         // Ambient
         const ambientLight = new THREE.AmbientLight(0x87CEEB, 0.6);
         this.scene.add(ambientLight);
@@ -131,7 +183,7 @@ class Game {
         this.scene.add(fillLight);
     }
 
-    setupSkybox() {
+    setupSkybox(): void {
         // Gradient sky
         const skyGeo = new THREE.SphereGeometry(250, 20, 20);
         const skyMat = new THREE.ShaderMaterial({
@@ -180,7 +232,7 @@ class Game {
         this.createSunVisual();
     }
 
-    createClouds() {
+    createClouds(): void {
         this.clouds = [];
         const cloudMat = new THREE.MeshLambertMaterial({   // PERF: Lambert
             color: 0xFFFFFF,
@@ -223,7 +275,7 @@ class Game {
         }
     }
 
-    createSunVisual() {
+    createSunVisual(): void {
         const sunGeo = new THREE.SphereGeometry(8, 12, 12);
         const sunMat = new THREE.MeshBasicMaterial({
             color: 0xFFF9C4,
@@ -245,11 +297,11 @@ class Game {
         this.scene.add(glow);
     }
 
-    setupFog() {
+    setupFog(): void {
         this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
     }
 
-    setupAmbientParticles() {
+    setupAmbientParticles(): void {
         this.ambientParticles = [];
         const particleCount = 20;  // PERF: 20 (was 60)
         const geo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
@@ -278,7 +330,7 @@ class Game {
         }
     }
 
-    setupInput() {
+    setupInput(): void {
         document.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
 
@@ -343,7 +395,7 @@ class Game {
         });
     }
 
-    handleBlockPlace() {
+    handleBlockPlace(): void {
         if (this.building.placeBlock(this.camera, this.character, this.physics)) {
             this.audio.play('place');
             this.particles.emit(
@@ -357,7 +409,7 @@ class Game {
         }
     }
 
-    handleBlockRemove() {
+    handleBlockRemove(): void {
         const removed = this.building.removeBlock(this.camera, this.character);
         if (removed) {
             this.audio.play('remove');
@@ -365,7 +417,7 @@ class Game {
         }
     }
 
-    setupMenuEvents() {
+    setupMenuEvents(): void {
         document.getElementById('btn-play')?.addEventListener('click', () => this.startGame());
 
         document.getElementById('btn-settings')?.addEventListener('click', () => {
@@ -387,15 +439,15 @@ class Game {
         document.getElementById('btn-quit')?.addEventListener('click', () => this.quitToMenu());
     }
 
-    applySettings() {
-        const sens = document.getElementById('sensitivity')?.value || 5;
-        const quality = document.getElementById('quality')?.value || 'medium';
-        const volume = document.getElementById('volume')?.value || 70;
-        const renderDist = document.getElementById('render-distance')?.value || 150;
+    applySettings(): void {
+        const sens = Number((document.getElementById('sensitivity') as HTMLInputElement | null)?.value || '5');
+        const quality = ((document.getElementById('quality') as HTMLSelectElement | null)?.value || 'medium') as GameSettings['quality'];
+        const volume = Number((document.getElementById('volume') as HTMLInputElement | null)?.value || '70');
+        const renderDist = Number((document.getElementById('render-distance') as HTMLInputElement | null)?.value || '150');
 
         this.sensitivity = sens * 0.0005;
         this.settings.quality = quality;
-        this.settings.renderDistance = Number.parseInt(renderDist);
+        this.settings.renderDistance = Math.floor(renderDist);
         this.audio.setVolume(volume / 100);
 
         switch (quality) {
@@ -414,11 +466,11 @@ class Game {
         }
 
         if (this.scene.fog) {
-            this.scene.fog.density = 1 / (this.settings.renderDistance * 1.5);
+            (this.scene.fog as THREE.FogExp2).density = 1 / (this.settings.renderDistance * 1.5);
         }
     }
 
-    async load() {
+    async load(): Promise<void> {
         const loadingBar = document.getElementById('loading-bar');
         const loadingText = document.getElementById('loading-text');
 
@@ -473,11 +525,11 @@ class Game {
         this.renderLoop();
     }
 
-    sleep(ms) {
+    sleep(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    startGame() {
+    startGame(): void {
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('game-hud').style.display = 'block';
         this.state = 'playing';
@@ -496,20 +548,20 @@ class Game {
         this.canvas.requestPointerLock();
     }
 
-    pause() {
+    pause(): void {
         this.state = 'paused';
         document.getElementById('pause-menu').style.display = 'block';
         document.exitPointerLock();
     }
 
-    resume() {
+    resume(): void {
         this.state = 'playing';
         document.getElementById('pause-menu').style.display = 'none';
         document.getElementById('settings-modal').style.display = 'none';
         this.canvas.requestPointerLock();
     }
 
-    quitToMenu() {
+    quitToMenu(): void {
         this.state = 'menu';
         document.getElementById('pause-menu').style.display = 'none';
         document.getElementById('game-hud').style.display = 'none';
@@ -519,7 +571,7 @@ class Game {
         this.camera.lookAt(0, 5, 0);
     }
 
-    renderLoop() {
+    renderLoop(): void {
         requestAnimationFrame(() => this.renderLoop());
 
         const dt = Math.min(this.clock.getDelta(), 0.05);
@@ -549,7 +601,7 @@ class Game {
         this.renderer.render(this.scene, this.camera);
     }
 
-    updateAmbientParticles(dt) {
+    updateAmbientParticles(dt: number): void {
         if (!this.ambientParticles) return;
         const time = performance.now() * 0.001;
         const playerPos = this.character ? this.character.position : new THREE.Vector3(0, 10, 0);
@@ -567,7 +619,7 @@ class Game {
         }
     }
 
-    update(dt) {
+    update(dt: number): void {
         this.processInput(dt);
         this.physics.update(this.character, dt);
 
@@ -633,7 +685,7 @@ class Game {
         this.mouse.dy = 0;
     }
 
-    processInput(dt) {
+    processInput(_dt: number): void {
         if (!this.isPointerLocked) {
             return;
         }
@@ -689,7 +741,7 @@ class Game {
         }
     }
 
-    updateCamera(dt) {
+    updateCamera(_dt: number): void {
         const charPos = this.character.position.clone();
         charPos.y += 1.5; // head height
 
@@ -745,7 +797,7 @@ class Game {
         }
     }
 
-    updateStepSounds(dt) {
+    updateStepSounds(dt: number): void {
         const isMoving = this.keys['KeyW'] || this.keys['KeyA'] || this.keys['KeyS'] || this.keys['KeyD'];
         if (isMoving && this.character.onGround) {
             this.stepTimer += dt;
@@ -759,7 +811,7 @@ class Game {
         }
     }
 
-    updateClouds(dt) {
+    updateClouds(_dt: number): void {
         if (!this.clouds) return;
         const time = performance.now() * 0.001;
         for (const cloud of this.clouds) {
@@ -778,5 +830,5 @@ class Game {
 globalThis.addEventListener('DOMContentLoaded', () => {
     const game = new Game();
     game.init();
-    globalThis.game = game;
+    (globalThis as Window & typeof globalThis & { game?: Game }).game = game;
 });

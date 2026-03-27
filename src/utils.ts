@@ -1,28 +1,30 @@
 // ============================================
 // UTILITIES
 // ============================================
+import type { Vec3 } from './types';
+
 const Utils = {
-    lerp(a, b, t) {
+    lerp(a: number, b: number, t: number): number {
         return a + (b - a) * t;
     },
 
-    clamp(val, min, max) {
+    clamp(val: number, min: number, max: number): number {
         return Math.max(min, Math.min(max, val));
     },
 
-    randomRange(min, max) {
+    randomRange(min: number, max: number): number {
         return Math.random() * (max - min) + min;
     },
 
-    randomInt(min, max) {
+    randomInt(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     },
 
-    distance3D(a, b) {
+    distance3D(a: Vec3, b: Vec3): number {
         return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
     },
 
-    hexToRgb(hex) {
+    hexToRgb(hex: string): { r: number; g: number; b: number } | null {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
             r: Number.parseInt(result[1], 16) / 255,
@@ -31,22 +33,22 @@ const Utils = {
         } : null;
     },
 
-    easeOutCubic(t) {
+    easeOutCubic(t: number): number {
         return 1 - Math.pow(1 - t, 3);
     },
 
-    easeInOutQuad(t) {
+    easeInOutQuad(t: number): number {
         return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     },
 
     // Hash-based noise for terrain (returns 0 to 1)
-    noise2D(x, z) {
+    noise2D(x: number, z: number): number {
         const n = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
         return n - Math.floor(n);
     },
 
     // Better noise with octaves
-    fbm(x, z, octaves = 4, lacunarity = 2, gain = 0.5) {
+    fbm(x: number, z: number, octaves = 4, lacunarity = 2, gain = 0.5): number {
         let value = 0;
         let amplitude = 1;
         let frequency = 1;
@@ -62,7 +64,7 @@ const Utils = {
         return value / maxValue;
     },
 
-    smoothNoise(x, z) {
+    smoothNoise(x: number, z: number): number {
         const ix = Math.floor(x);
         const iz = Math.floor(z);
         const fx = x - ix;
@@ -80,7 +82,7 @@ const Utils = {
     },
 
     // Color helpers
-    brightenColor(hex, percent) {
+    brightenColor(hex: string, percent: number): string {
         const rgb = this.hexToRgb(hex);
         if (!rgb) return hex;
         const r = Math.min(255, Math.floor(rgb.r * 255 * (1 + percent / 100)));
@@ -89,3 +91,5 @@ const Utils = {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 };
+
+export default Utils;

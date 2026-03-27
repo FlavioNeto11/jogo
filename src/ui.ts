@@ -1,7 +1,27 @@
 // ============================================
 // UI SYSTEM
 // ============================================
-class UISystem {
+import type { BlockType, Vec3 } from './types';
+import type { World } from './world';
+
+export class UISystem {
+    toolbarSlots: HTMLElement | null;
+    healthBar: HTMLElement | null;
+    healthText: HTMLElement | null;
+    coinCount: HTMLElement | null;
+    levelText: HTMLElement | null;
+    fpsCounter: HTMLElement | null;
+    positionDisplay: HTMLElement | null;
+    chatMessages: HTMLElement | null;
+    notificationEl: HTMLElement | null;
+    notificationText: HTMLElement | null;
+    minimapCanvas: HTMLCanvasElement | null;
+    minimapCtx: CanvasRenderingContext2D | null;
+    notifTimer: ReturnType<typeof setTimeout> | null;
+    fpsFrames: number;
+    fpsTime: number;
+    currentFPS: number;
+
     constructor() {
         this.toolbarSlots = document.getElementById('toolbar-slots');
         this.healthBar = document.getElementById('health-bar');
@@ -13,7 +33,7 @@ class UISystem {
         this.chatMessages = document.getElementById('chat-messages');
         this.notificationEl = document.getElementById('notification');
         this.notificationText = document.getElementById('notification-text');
-        this.minimapCanvas = document.getElementById('minimap-canvas');
+        this.minimapCanvas = document.getElementById('minimap-canvas') as HTMLCanvasElement | null;
         this.minimapCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
 
         this.notifTimer = null;
@@ -22,18 +42,18 @@ class UISystem {
         this.currentFPS = 60;
     }
 
-    initToolbar(blocks, blockTypes) {
+    initToolbar(blocks: string[], blockTypes: Record<string, BlockType>) {
         if (!this.toolbarSlots) return;
         this.toolbarSlots.innerHTML = '';
 
         blocks.forEach((blockKey, index) => {
             const slot = document.createElement('div');
             slot.className = 'toolbar-slot' + (index === 0 ? ' active' : '');
-            slot.dataset.index = index;
+            slot.dataset.index = String(index);
 
             const number = document.createElement('span');
             number.className = 'slot-number';
-            number.textContent = index + 1;
+            number.textContent = String(index + 1);
 
             const block = document.createElement('div');
             block.className = 'slot-block';
@@ -60,8 +80,9 @@ class UISystem {
             slot.addEventListener('click', () => {
                 document.querySelectorAll('.toolbar-slot').forEach(s => s.classList.remove('active'));
                 slot.classList.add('active');
-                if (globalThis.game) {
-                    globalThis.game.building.selectSlot(index);
+                const game = (globalThis as Window & typeof globalThis & { game?: { building?: { selectSlot: (idx: number) => void } } }).game;
+                if (game?.building) {
+                    game.building.selectSlot(index);
                 }
             });
 
@@ -69,13 +90,13 @@ class UISystem {
         });
     }
 
-    selectToolbarSlot(index) {
+    selectToolbarSlot(index: number): void {
         const slots = document.querySelectorAll('.toolbar-slot');
         slots.forEach(s => s.classList.remove('active'));
         if (slots[index]) slots[index].classList.add('active');
     }
 
-    updateHealth(health, maxHealth) {
+    updateHealth(health: number, maxHealth: number): void {
         if (this.healthBar) {
             const pct = (health / maxHealth) * 100;
             this.healthBar.style.width = pct + '%';
@@ -88,12 +109,12 @@ class UISystem {
                 this.healthBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
             }
         }
-        if (this.healthText) this.healthText.textContent = Math.floor(health);
+        if (this.healthText) this.healthText.textContent = String(Math.floor(health));
     }
 
-    updateCoins(count) {
+    updateCoins(count: number): void {
         if (this.coinCount) {
-            this.coinCount.textContent = count;
+            this.coinCount.textContent = String(count);
             // Animate
             this.coinCount.style.transform = 'scale(1.3)';
             setTimeout(() => {
@@ -102,11 +123,11 @@ class UISystem {
         }
     }
 
-    updateLevel(level) {
+    updateLevel(level: number): void {
         if (this.levelText) this.levelText.textContent = `Nível ${level}`;
     }
 
-    updateFPS(dt) {
+    updateFPS(dt: number): void {
         this.fpsFrames++;
         this.fpsTime += dt;
         if (this.fpsTime >= 0.5) {
@@ -120,19 +141,19 @@ class UISystem {
         }
     }
 
-    getFPSColor(fps) {
+    getFPSColor(fps: number): string {
         if (fps >= 50) return '#2ecc71';
         if (fps >= 30) return '#f39c12';
         return '#e74c3c';
     }
 
-    updatePosition(x, y, z) {
+    updatePosition(x: number, y: number, z: number): void {
         if (this.positionDisplay) {
             this.positionDisplay.textContent = `X: ${Math.round(x)} Y: ${Math.round(y)} Z: ${Math.round(z)}`;
         }
     }
 
-    addChatMessage(text, type = 'normal') {
+    addChatMessage(text: string, type = 'normal'): void {
         if (!this.chatMessages) return;
 
         const msg = document.createElement('div');
@@ -149,7 +170,7 @@ class UISystem {
         }, 10000);
     }
 
-    showNotification(text, duration = 3000) {
+    showNotification(text: string, duration = 3000): void {
         if (this.notifTimer) clearTimeout(this.notifTimer);
 
         if (this.notificationEl && this.notificationText) {
@@ -162,19 +183,19 @@ class UISystem {
         }
     }
 
-    drawMinimapBlock(ctx, world, wx, wz, screenX, screenY, scale) {
+    drawMinimapBlock(ctx: CanvasRenderingContext2D, world: World, wx: number, wz: number, screenX: number, screenY: number, scale: number): void {
         const gy = world.getGroundHeight(wx, wz);
         if (gy < 0) return;
 
         const block = world.getBlock(wx, gy, wz);
         if (!block) return;
 
-        const type = world.blockTypes[block.type];
+        const type = world.blockTypes[block];
         ctx.fillStyle = type ? '#' + type.color.toString(16).padStart(6, '0') : '#555';
         ctx.fillRect(screenX, screenY, scale, scale);
     }
 
-    updateMinimap(playerPos, world) {
+    updateMinimap(playerPos: Vec3, world: World): void {
         if (!this.minimapCtx) return;
 
         const ctx = this.minimapCtx;

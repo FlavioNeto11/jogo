@@ -8,10 +8,24 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ## [Unreleased]
 
-### Planejado
-- Sprint 01: Migração para ES Modules + Vite
-- Sprint 02: Migração para TypeScript
-- Sprint 03: Upgrade Three.js r128 → r170+
+### Added
+
+- Estrutura de build com Vite e scripts npm para `dev`, `build`, `preview` e `typecheck`
+- Diretório `src/` com módulos TypeScript para todos os sistemas do jogo
+- Arquivo de tipagem compartilhada em `src/types.ts`
+
+### Changed
+
+- Migração de scripts globais para ES Modules com imports/exports explícitos
+- `index.html` agora usa apenas entrypoint modular (`/src/game.ts`)
+- Three.js migrado de CDN r128 para dependência npm (`three@latest`)
+- Renderer atualizado para API de color space moderna (`outputColorSpace` + `SRGBColorSpace`)
+
+### Removed
+
+- Cadeia de `<script>` globais antiga
+- Pasta legada `js/`
+- Dependência de `css/style.css` fora de `src/`
 
 ---
 

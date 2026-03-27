@@ -1,8 +1,20 @@
 // ============================================
 // ENTITIES (NPCs, Collectibles, Enemies)
 // ============================================
-class EntitySystem {
-    constructor(scene, world) {
+import * as THREE from 'three';
+import Utils from './utils';
+import type { EntityUpdateResult } from './types';
+import type { World } from './world';
+
+export class EntitySystem {
+    scene: THREE.Scene;
+    world: World;
+    entities: THREE.Object3D[];
+    coins: THREE.Group[];
+    npcs: THREE.Group[];
+    particles: THREE.Object3D[];
+
+    constructor(scene: THREE.Scene, world: World) {
         this.scene = scene;
         this.world = world;
         this.entities = [];
@@ -11,7 +23,7 @@ class EntitySystem {
         this.particles = [];
     }
 
-    spawnCoins(count = 50) {
+    spawnCoins(count = 50): void {
         const size = this.world.worldSize;
 
         for (let i = 0; i < count; i++) {
@@ -25,7 +37,7 @@ class EntitySystem {
         }
     }
 
-    createCoin(x, y, z) {
+    createCoin(x: number, y: number, z: number): void {
         const group = new THREE.Group();
 
         // Coin body (cylinder) — MeshLambertMaterial, no PointLight
@@ -64,7 +76,7 @@ class EntitySystem {
         this.coins.push(group);
     }
 
-    spawnNPCs() {
+    spawnNPCs(): void {
         const size = this.world.worldSize;
 
         // Spawn family members near the center
@@ -94,7 +106,7 @@ class EntitySystem {
         }
     }
 
-    createFamilyNPC(x, y, z, member) {
+    createFamilyNPC(x: number, y: number, z: number, member: 'flavio' | 'anapaula' | 'mafe' | 'julia'): void {
         const group = new THREE.Group();
 
         // Family member configs based on real photos
@@ -183,7 +195,7 @@ class EntitySystem {
             }
         };
 
-        const cfg = configs[member];
+        const cfg = (configs as Record<string, any>)[member];
         const s = cfg.scale;
 
         // Head
@@ -387,7 +399,7 @@ class EntitySystem {
         this.npcs.push(group);
     }
 
-    createGenericNPC(x, y, z) {
+    createGenericNPC(x: number, y: number, z: number): void {
         const group = new THREE.Group();
 
         const colors = [0xE91E63, 0x9C27B0, 0xFF5722, 0x00BCD4, 0x8BC34A, 0xFF9800];
@@ -468,12 +480,12 @@ class EntitySystem {
         this.npcs.push(group);
     }
 
-    getHeartScale(family) {
+    getHeartScale(family?: string): number {
         const scales = { flavio: 1.15, mafe: 0.9, julia: 0.65 };
         return scales[family] || 1;
     }
 
-    updateNPCIdle(data, dt, time) {
+    updateNPCIdle(data: any, dt: number, time: number): void {
         data.idleTimer += dt;
         if (data.idleTimer > Utils.randomRange(1, 3)) {
             data.isIdle = false;
@@ -489,7 +501,7 @@ class EntitySystem {
         if (data.rightArm) data.rightArm.rotation.x = -idle;
     }
 
-    updateNPCWalking(npc, data, dt, time) {
+    updateNPCWalking(npc: THREE.Group, data: any, dt: number, time: number): void {
         data.walkTimer += dt;
 
         const moveX = data.walkDir.x * data.speed * dt;
@@ -528,7 +540,7 @@ class EntitySystem {
         }
     }
 
-    updateSingleNPC(npc, time, dt, playerPos, dialogueMessages) {
+    updateSingleNPC(npc: THREE.Group, time: number, dt: number, playerPos: THREE.Vector3, dialogueMessages: string[]): void {
         const data = npc.userData;
         const distToPlayer = Utils.distance3D(npc.position, playerPos);
 
@@ -558,7 +570,7 @@ class EntitySystem {
         }
     }
 
-    update(dt, playerPos) {
+    update(dt: number, playerPos: THREE.Vector3): EntityUpdateResult {
         // Update coins
         const time = performance.now() / 1000;
         this.coins.forEach(coin => {
@@ -592,7 +604,7 @@ class EntitySystem {
         return { coinsCollected: collected.length, dialogues: dialogueMessages };
     }
 
-    getActiveCoinCount() {
+    getActiveCoinCount(): number {
         return this.coins.length;
     }
 }

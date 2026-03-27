@@ -1,8 +1,21 @@
 // ============================================
 // BUILDING SYSTEM
 // ============================================
-class BuildingSystem {
-    constructor(world, scene) {
+import * as THREE from 'three';
+import type { Character } from './character';
+import type { Physics } from './physics';
+import type { World } from './world';
+
+export class BuildingSystem {
+    world: World;
+    scene: THREE.Scene;
+    selectedBlockType: string;
+    ghostBlock: THREE.Mesh | null;
+    toolbarBlocks: string[];
+    selectedSlot: number;
+    highlightBox: THREE.LineSegments | null = null;
+
+    constructor(world: World, scene: THREE.Scene) {
         this.world = world;
         this.scene = scene;
         this.selectedBlockType = 'brick';
@@ -15,7 +28,7 @@ class BuildingSystem {
         this.createGhostBlock();
     }
 
-    createGhostBlock() {
+    createGhostBlock(): void {
         const geo = new THREE.BoxGeometry(1.02, 1.02, 1.02);
         const mat = new THREE.MeshBasicMaterial({
             color: 0xffffff,
@@ -42,14 +55,14 @@ class BuildingSystem {
         this.scene.add(this.highlightBox);
     }
 
-    selectSlot(index) {
+    selectSlot(index: number): void {
         this.selectedSlot = index;
         if (index < this.toolbarBlocks.length) {
             this.selectedBlockType = this.toolbarBlocks[index];
         }
     }
 
-    updateGhost(camera, character) {
+    updateGhost(camera: THREE.Camera, character: Character): void {
         const dir = new THREE.Vector3();
         camera.getWorldDirection(dir);
         // Start ray from character position (not camera) in camera direction
@@ -71,7 +84,7 @@ class BuildingSystem {
             // Update ghost color to match selected block
             const blockType = this.world.blockTypes[this.selectedBlockType];
             if (blockType) {
-                this.ghostBlock.material.color.setHex(blockType.color);
+                (this.ghostBlock.material as THREE.MeshBasicMaterial).color.setHex(blockType.color);
             }
 
             // Show highlight on the targeted block
@@ -87,7 +100,7 @@ class BuildingSystem {
         }
     }
 
-    placeBlock(camera, character, physics) {
+    placeBlock(camera: THREE.Camera, character: Character, physics: Physics): boolean {
         const dir = new THREE.Vector3();
         camera.getWorldDirection(dir);
         const charCenter = character.position.clone();
@@ -108,7 +121,7 @@ class BuildingSystem {
         return false;
     }
 
-    removeBlock(camera, character) {
+    removeBlock(camera: THREE.Camera, character: Character): { x: number; y: number; z: number } | null {
         const dir = new THREE.Vector3();
         camera.getWorldDirection(dir);
         const charCenter = character.position.clone();

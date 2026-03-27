@@ -1,14 +1,22 @@
 // ============================================
 // PHYSICS SYSTEM
 // ============================================
-class Physics {
-    constructor(world) {
+import type { Character } from './character';
+import type { World } from './world';
+import type { AABB } from './types';
+
+export class Physics {
+    world: World;
+    gravity: number;
+    terminalVelocity: number;
+
+    constructor(world: World) {
         this.world = world;
         this.gravity = -20;
         this.terminalVelocity = -50;
     }
 
-    update(character, dt) {
+    update(character: Character, dt: number): void {
         // Apply gravity
         character.velocity.y += this.gravity * dt;
         character.velocity.y = Math.max(character.velocity.y, this.terminalVelocity);
@@ -56,7 +64,7 @@ class Physics {
         }
     }
 
-    moveAxis(character, axis, amount) {
+    moveAxis(character: Character, axis: 'x' | 'y' | 'z', amount: number): void {
         character.position[axis] += amount;
 
         const aabb = character.getAABB();
@@ -71,7 +79,7 @@ class Physics {
         }
     }
 
-    getBlockRange(aabb) {
+    getBlockRange(aabb: AABB): { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number } {
         return {
             minX: Math.floor(aabb.min.x),
             maxX: Math.ceil(aabb.max.x),
@@ -82,7 +90,7 @@ class Physics {
         };
     }
 
-    resolveBlockCollision(character, axis, amount, bx, by, bz, aabb) {
+    resolveBlockCollision(character: Character, axis: 'x' | 'y' | 'z', amount: number, bx: number, by: number, bz: number, aabb: AABB): void {
         const block = this.world.getBlock(bx, by, bz);
         if (!block || block === 'water') return;
 
@@ -96,7 +104,7 @@ class Physics {
         this.pushOut(character, axis, amount, blockAABB);
     }
 
-    pushOut(character, axis, amount, blockAABB) {
+    pushOut(character: Character, axis: 'x' | 'y' | 'z', amount: number, blockAABB: AABB): void {
         if (axis === 'x') {
             character.position.x = amount > 0
                 ? blockAABB.min.x - character.width / 2
@@ -115,7 +123,7 @@ class Physics {
         }
     }
 
-    aabbOverlap(a, b) {
+    aabbOverlap(a: AABB, b: AABB): boolean {
         return (
             a.min.x < b.max.x && a.max.x > b.min.x &&
             a.min.y < b.max.y && a.max.y > b.min.y &&
@@ -123,7 +131,7 @@ class Physics {
         );
     }
 
-    isOnGround(character) {
+    isOnGround(character: Character): boolean {
         const aabb = character.getAABB();
         const testY = aabb.min.y - 0.05;
 
@@ -145,7 +153,7 @@ class Physics {
     }
 
     // Check if a block position is valid for placement (not inside player)
-    canPlaceBlock(x, y, z, character) {
+    canPlaceBlock(x: number, y: number, z: number, character: Character): boolean {
         const blockAABB = {
             min: { x: x - 0.5, y: y - 0.5, z: z - 0.5 },
             max: { x: x + 0.5, y: y + 0.5, z: z + 0.5 }
