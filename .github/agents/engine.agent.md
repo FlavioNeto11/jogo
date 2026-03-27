@@ -5,17 +5,15 @@ argument-hint: "descreva o problema de rendering, performance ou sistema de engi
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - fetch
-  - runCommands
-  - runTasks
-  - runSubagent
-  - openSimpleBrowser
-  - io.github.ChromeDevTools/chrome-devtools-mcp/*
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - web/fetch
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
+  - web
 handoffs:
   - label: "delegar mundo/terreno"
     agent: WorldBuilder

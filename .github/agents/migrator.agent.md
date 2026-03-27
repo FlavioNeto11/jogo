@@ -5,15 +5,14 @@ argument-hint: "descreva o arquivo, módulo ou sistema a migrar de JS para TypeS
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
   - runTests
-  - openSimpleBrowser
-  - io.github.upstash/context7/*
+  - web
 handoffs:
   - label: "revisar arquitetura"
     agent: Architect

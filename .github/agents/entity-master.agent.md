@@ -5,14 +5,13 @@ argument-hint: "descreva a entidade, NPC, AI behavior ou componente ECS a criar"
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - runSubagent
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
 handoffs:
   - label: "adicionar física"
     agent: Physics

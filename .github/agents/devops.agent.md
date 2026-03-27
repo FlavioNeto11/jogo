@@ -5,22 +5,18 @@ argument-hint: "descreva o pipeline, configuração de build, deploy ou infraest
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
   - runTests
-  - runSubagent
-  - githubRepo
-  - todos
-  - fetch
-  - io.github.github/github-mcp-server/*
-  - GitKraken/*
-  - microsoft/playwright-mcp/*
+  - agent
+  - web/githubRepo
+  - todo
+  - web/fetch
   - ms-azuretools.vscode-containers/containerToolsConfig
-  - io.github.upstash/context7/*
 handoffs:
   - label: "revisar arquitetura"
     agent: Architect

@@ -5,15 +5,13 @@ argument-hint: "descreva o sistema de física, colisão ou movimento a implement
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - openSimpleBrowser
-  - io.github.ChromeDevTools/chrome-devtools-mcp/*
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - web
 handoffs:
   - label: "revisar arquitetura"
     agent: Architect

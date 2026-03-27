@@ -5,21 +5,18 @@ argument-hint: "descreva o teste, validação, review ou análise de qualidade a
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
   - runTests
   - testFailure
-  - runSubagent
-  - openSimpleBrowser
-  - microsoft/playwright-mcp/*
-  - io.github.ChromeDevTools/chrome-devtools-mcp/*
+  - agent
+  - web
   - sonarsource.sonarlint-vscode/sonarqube_analyzeFile
   - sonarsource.sonarlint-vscode/sonarqube_getPotentialSecurityIssues
-  - io.github.upstash/context7/*
 handoffs:
   - label: "corrigir engine"
     agent: Engine

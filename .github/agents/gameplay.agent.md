@@ -5,15 +5,14 @@ argument-hint: "descreva a mecânica de gameplay, quest, item ou sistema a imple
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - runSubagent
-  - fetch
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
+  - web/fetch
 handoffs:
   - label: "criar entidades"
     agent: EntityMaster

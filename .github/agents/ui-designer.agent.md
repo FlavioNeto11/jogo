@@ -5,16 +5,13 @@ argument-hint: "descreva o componente de UI, menu, HUD ou tela a criar"
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - openSimpleBrowser
-  - microsoft/playwright-mcp/*
-  - io.github.ChromeDevTools/chrome-devtools-mcp/*
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - web
 handoffs:
   - label: "conectar gameplay"
     agent: Gameplay

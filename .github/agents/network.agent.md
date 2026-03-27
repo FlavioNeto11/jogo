@@ -5,17 +5,15 @@ argument-hint: "descreva o recurso de rede, multiplayer ou backend a implementar
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - runSubagent
-  - fetch
-  - openSimpleBrowser
-  - io.github.upstash/context7/*
-  - io.github.github/github-mcp-server/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
+  - web/fetch
+  - web
 handoffs:
   - label: "revisar arquitetura"
     agent: Architect

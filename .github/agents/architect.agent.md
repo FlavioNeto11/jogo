@@ -5,20 +5,16 @@ argument-hint: "descreva a decis√£o arquitetural, refactoring ou estrutura de m√
 tools:
   - search
   - edit
-  - new
-  - usages
-  - problems
-  - changes
-  - fetch
-  - githubRepo
-  - runCommands
-  - runTasks
-  - runSubagent
-  - todos
-  - io.github.upstash/context7/*
-  - io.github.github/github-mcp-server/*
-  - GitKraken/*
-  - microsoft/markitdown/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - web/fetch
+  - web/githubRepo
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
+  - todo
 handoffs:
   - label: "implementar design"
     agent: Engine

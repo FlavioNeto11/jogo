@@ -5,15 +5,13 @@ argument-hint: "descreva o som, música, efeito sonoro ou sistema de áudio a im
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - openSimpleBrowser
-  - io.github.ChromeDevTools/chrome-devtools-mcp/*
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - web
 handoffs:
   - label: "integrar no gameplay"
     agent: Gameplay

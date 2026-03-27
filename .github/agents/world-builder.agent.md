@@ -5,15 +5,14 @@ argument-hint: "descreva o terreno, bioma, chunk ou estrutura procedural a gerar
 tools:
   - edit
   - search
-  - new
-  - usages
-  - problems
-  - changes
-  - runCommands
-  - runTasks
-  - runSubagent
-  - openSimpleBrowser
-  - io.github.upstash/context7/*
+  - vscode/newWorkspace
+  - search/usages
+  - read/problems
+  - search/changes
+  - execute/runInTerminal
+  - execute/createAndRunTask
+  - agent
+  - web
 handoffs:
   - label: "otimizar rendering"
     agent: Engine
