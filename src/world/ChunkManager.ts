@@ -1,12 +1,28 @@
 // ============================================
-// CHUNK MANAGER — Sprint 4
+// CHUNK MANAGER — Sprint 5 (LOD + Frustum Culling)
 // ============================================
 import * as THREE from 'three';
 import type { IWorldQuery, RaycastHit, BlockType, Vec3 } from '../types';
 import { Chunk, CHUNK_SIZE } from './Chunk';
 import { BlockRegistry } from './BlockRegistry';
-import { ChunkMeshBuilder, type ChunkNeighbors } from './ChunkMeshBuilder';
+import { ChunkMeshBuilder, type ChunkNeighbors, type LodLevel } from './ChunkMeshBuilder';
 import { TerrainGenerator } from './TerrainGenerator';
+import { ChunkCuller } from './ChunkCuller';
+
+/**
+ * LOD thresholds in chunk-distance from player:
+ *  0-3  → full   (greedy mesh, shadows on)
+ *  4-5  → medium (greedy mesh, shadows off)
+ *  6+   → low    (heightmap plane, vertex colours)
+ */
+const LOD_MEDIUM = 4;
+const LOD_LOW    = 6;
+
+interface ChunkLodEntry {
+    chunk: Chunk;
+    currentLod: LodLevel;
+    maxY: number;
+}
 
 /**
  * Manages dynamic loading/unloading of chunks based on player position.
@@ -18,6 +34,7 @@ export class ChunkManager implements IWorldQuery {
     waterPlane: THREE.Mesh | null = null;
 
     private chunks = new Map<string, Chunk>();
+    private lodEntries = new Map<string, ChunkLodEntry>();
     private loadQueue: Array<[number, number]> = [];
     private lastPlayerChunkX = NaN;
     private lastPlayerChunkZ = NaN;
@@ -26,6 +43,7 @@ export class ChunkManager implements IWorldQuery {
     private generator: TerrainGenerator;
     private registry: BlockRegistry;
     private meshBuilder: ChunkMeshBuilder;
+    private culler: ChunkCuller;
     private renderDistance: number;
 
     // IDs cached for hot-path checks
@@ -43,6 +61,7 @@ export class ChunkManager implements IWorldQuery {
         this.generator = generator;
         this.registry = registry;
         this.meshBuilder = new ChunkMeshBuilder(registry);
+        this.culler = new ChunkCuller();
         this.renderDistance = renderDistance;
         this.waterLevel = generator.waterLevel;
 
@@ -138,6 +157,17 @@ export class ChunkManager implements IWorldQuery {
     /** Pseudo world size for entity spawn range compatibility */
     get worldSize(): number { return 64; }
 
+    // ---- Per-frame LOD + frustum culling ----
+
+    /**
+     * Primary per-frame call: streaming + LOD transitions + frustum culling.
+     */
+    updateWithCamera(playerX: number, playerZ: number, camera: THREE.Camera): void {
+        this.culler.update(camera);
+        this.update(playerX, playerZ);
+        this.applyLodAndCulling(playerX, playerZ);
+    }
+
     // ---- Streaming ----
 
     /** Called every frame; loads/unloads chunks around the player. */
@@ -228,7 +258,13 @@ export class ChunkManager implements IWorldQuery {
         const chunk = new Chunk(cx, cz);
         this.generator.generateChunk(chunk, this.registry);
         this.chunks.set(key, chunk);
-        this.buildChunkMesh(chunk);
+
+        const distChunks = Math.max(
+            Math.abs(cx - this.lastPlayerChunkX),
+            Math.abs(cz - this.lastPlayerChunkZ)
+        );
+        const lod = isNaN(distChunks) ? 'full' : this.computeLod(distChunks);
+        this.buildChunkMeshLod(chunk, lod);
     }
 
     private unloadChunk(cx: number, cz: number): void {
@@ -242,11 +278,12 @@ export class ChunkManager implements IWorldQuery {
             chunk.mesh = null;
         }
         this.chunks.delete(key);
+        this.lodEntries.delete(key);
     }
 
-    private buildChunkMesh(chunk: Chunk): void {
+    private buildChunkMeshLod(chunk: Chunk, lod: LodLevel): void {
         const neighbors = this.getNeighbors(chunk.chunkX, chunk.chunkZ);
-        const group = this.meshBuilder.build(chunk, neighbors);
+        const group = this.meshBuilder.build(chunk, neighbors, lod);
 
         if (chunk.mesh) {
             this.scene.remove(chunk.mesh);
@@ -255,10 +292,57 @@ export class ChunkManager implements IWorldQuery {
         chunk.mesh = group;
         this.scene.add(group);
         chunk.isDirty = false;
+
+        const maxY = this.computeChunkMaxY(chunk);
+        const key = this.chunkKey(chunk.chunkX, chunk.chunkZ);
+        this.lodEntries.set(key, { chunk, currentLod: lod, maxY });
     }
 
     private rebuildChunkMesh(chunk: Chunk): void {
-        this.buildChunkMesh(chunk);
+        const key = this.chunkKey(chunk.chunkX, chunk.chunkZ);
+        const lod = this.lodEntries.get(key)?.currentLod ?? 'full';
+        this.buildChunkMeshLod(chunk, lod);
+    }
+
+    private applyLodAndCulling(playerX: number, playerZ: number): void {
+        const pcx = this.worldToChunk(playerX);
+        const pcz = this.worldToChunk(playerZ);
+
+        for (const entry of this.lodEntries.values()) {
+            const { chunk } = entry;
+            if (!chunk.mesh) continue;
+
+            const visible = this.culler.isChunkVisible(chunk.chunkX, chunk.chunkZ, entry.maxY);
+            chunk.mesh.visible = visible;
+            if (!visible) continue;
+
+            const distChunks = Math.max(
+                Math.abs(chunk.chunkX - pcx),
+                Math.abs(chunk.chunkZ - pcz)
+            );
+            const targetLod = this.computeLod(distChunks);
+            if (targetLod !== entry.currentLod) {
+                entry.currentLod = targetLod;
+                this.buildChunkMeshLod(chunk, targetLod);
+            }
+        }
+    }
+
+    private computeLod(distChunks: number): LodLevel {
+        if (distChunks < LOD_MEDIUM) return 'full';
+        if (distChunks < LOD_LOW) return 'medium';
+        return 'low';
+    }
+
+    private computeChunkMaxY(chunk: Chunk): number {
+        let maxY = 0;
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+            for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+                const y = chunk.getHighestBlock(lx, lz);
+                if (y > maxY) maxY = y;
+            }
+        }
+        return maxY;
     }
 
     private getNeighbors(cx: number, cz: number): ChunkNeighbors {

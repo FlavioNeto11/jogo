@@ -15,6 +15,7 @@ import type { GameSettings, GameState, IWorldQuery } from './types';
 import { BlockRegistry } from './world/BlockRegistry';
 import { TerrainGenerator } from './world/TerrainGenerator';
 import { ChunkManager } from './world/ChunkManager';
+import { PerformanceMonitor } from './world/PerformanceMonitor';
 
 export class Game {
     canvas: HTMLCanvasElement;
@@ -35,6 +36,8 @@ export class Game {
     ui: UISystem;
 
     cameraMode: 'first' | 'third';
+        perfMonitor: PerformanceMonitor = new PerformanceMonitor();
+
     cameraDistance: number;
     cameraHeight: number;
     cameraPitch: number;
@@ -619,6 +622,8 @@ export class Game {
         this.updateAmbientParticles(dt);
 
         this.renderer.render(this.scene, this.camera);
+        const info = this.renderer.info.render;
+        this.perfMonitor.record(dt * 1000, info.calls, info.triangles);
     }
 
     updateAmbientParticles(dt: number): void {
@@ -641,7 +646,7 @@ export class Game {
 
     update(dt: number): void {
         // Stream chunks based on player position
-        this.chunkManager?.update(this.character.position.x, this.character.position.z);
+        this.chunkManager?.updateWithCamera(this.character.position.x, this.character.position.z, this.camera);
 
         this.processInput(dt);
         this.physics.update(this.character, dt);

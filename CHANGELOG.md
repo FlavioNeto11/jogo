@@ -6,6 +6,24 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+### Added (Sprint 5 — LOD + Frustum Culling + Otimizações de Renderização)
+
+- `src/world/ChunkCuller.ts` — Frustum culling por chunk usando `THREE.Frustum.intersectsBox()`; oculta chunks fora do campo de visão da câmera a zero custo de GPU; objetos `THREE.Box3` e `THREE.Matrix4` pré-alocados para zero GC por frame
+- `src/world/ChunkMeshBuilder.ts` — Reescrita completa com *greedy meshing*: varre os 6 eixos de face e funde quads adjacentes do mesmo bloco em retângulos maiores (~60-80% menos triângulos vs face-per-block); normais planas explícitas por face (flat shading correto); geometria não-indexada elimina averaging de normais entre faces
+- `src/world/PerformanceMonitor.ts` — Monitor de frame-time com ring buffer de 60 frames para FPS rolling; expõe `record()`, `getStats()` e `getHudText()` para overlay de debug
+- Sistema de 3 níveis de LOD em `ChunkManager`:
+	- `full` (0–3 chunks de distância): greedy mesh + sombras ativas
+	- `medium` (4–5 chunks): greedy mesh + sombras desativas
+	- `low` (6+ chunks): plano heightmap flat com vertex colours (single draw call por chunk)
+- `ChunkCuller` integrado ao `ChunkManager`: visibilidade por chunk é avaliada a cada frame em `applyLodAndCulling()`
+- Transições automáticas de LOD por distância Chebyshev do jogador: chunks que mudam de zona reconstróem o mesh no próximo frame
+
+### Changed (Sprint 5)
+
+- `ChunkManager.updateWithCamera(playerX, playerZ, camera)` substitui `update()` como chamada primária do loop: atualiza frustum → streaming → LOD+culling em uma única chamada
+- `game.ts` chama `chunkManager.updateWithCamera()` passando a câmera real; instancia e alimenta `PerformanceMonitor` com dados de `renderer.info.render` a cada frame
+- `ChunkManager.loadChunk()` determina o LOD inicial baseado na distância ao jogador em vez de sempre usar `full`
+
 ## [Unreleased]
 
 ### Added (Sprint 4 — Sistema de Chunks + Streaming)
