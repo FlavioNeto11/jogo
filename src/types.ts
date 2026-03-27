@@ -50,3 +50,16 @@ export interface GameSettings {
 }
 
 export type GameState = 'loading' | 'menu' | 'playing' | 'paused';
+
+/** Shared interface implemented by both legacy World and the new ChunkManager */
+export interface IWorldQuery {
+  getBlock(x: number, y: number, z: number): string | null;
+  setBlock(x: number, y: number, z: number, type: string): void;
+  removeBlock(x: number, y: number, z: number): void;
+  getGroundHeight(x: number, z: number): number;
+  raycastBlock(origin: THREE.Vector3, direction: THREE.Vector3, maxDist?: number): RaycastHit | null;
+  waterLevel: number;
+  waterPlane: THREE.Mesh | null;
+  blockTypes: Record<string, BlockType>;
+  worldSize: number;
+}

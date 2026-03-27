@@ -3,9 +3,9 @@
 // ============================================
 import * as THREE from 'three';
 import Utils from './utils';
-import type { BlockType, RaycastHit, Vec3 } from './types';
+import type { BlockType, IWorldQuery, RaycastHit, Vec3 } from './types';
 
-export class World {
+export class World implements IWorldQuery {
     scene: THREE.Scene;
     worldSize: number;
     waterLevel: number;

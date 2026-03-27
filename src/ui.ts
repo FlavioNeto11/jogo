@@ -2,7 +2,7 @@
 // UI SYSTEM
 // ============================================
 import type { BlockType, Vec3 } from './types';
-import type { World } from './world';
+import type { IWorldQuery } from './types';
 
 export class UISystem {
     toolbarSlots: HTMLElement | null;
@@ -185,7 +185,7 @@ export class UISystem {
         }
     }
 
-    drawMinimapBlock(ctx: CanvasRenderingContext2D, world: World, wx: number, wz: number, screenX: number, screenY: number, scale: number): void {
+    drawMinimapBlock(ctx: CanvasRenderingContext2D, world: IWorldQuery, wx: number, wz: number, screenX: number, screenY: number, scale: number): void {
         const gy = world.getGroundHeight(wx, wz);
         if (gy < 0) return;
 
@@ -197,7 +197,7 @@ export class UISystem {
         ctx.fillRect(screenX, screenY, scale, scale);
     }
 
-    updateMinimap(playerPos: Vec3, world: World): void {
+    updateMinimap(playerPos: Vec3, world: IWorldQuery): void {
         if (!this.minimapCtx || !this.minimapCanvas) return;
 
         const ctx = this.minimapCtx;

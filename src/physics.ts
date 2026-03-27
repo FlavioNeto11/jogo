@@ -2,15 +2,15 @@
 // PHYSICS SYSTEM
 // ============================================
 import type { Character } from './character';
-import type { World } from './world';
+import type { IWorldQuery } from './types';
 import type { AABB } from './types';
 
 export class Physics {
-    world: World;
+    world: IWorldQuery;
     gravity: number;
     terminalVelocity: number;
 
-    constructor(world: World) {
+    constructor(world: IWorldQuery) {
         this.world = world;
         this.gravity = -20;
         this.terminalVelocity = -50;

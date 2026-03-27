@@ -8,20 +8,36 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ## [Unreleased]
 
-### Added
+### Added (Sprint 4 — Sistema de Chunks + Streaming)
+
+- `src/world/BlockRegistry.ts` — Registro tipado de blocos com IDs numéricos e metadados (solid, transparent, emissive)
+- `src/world/Chunk.ts` — Estrutura de chunk 16×16×256 com `Uint8Array` (65 KB por chunk)
+- `src/world/TerrainGenerator.ts` — Geração de terreno seed-based extraída do World legado; suporte a estruturas cross-chunk (plataforma spawn, casas)
+- `src/world/ChunkMeshBuilder.ts` — Constrói `THREE.Group` por chunk com face culling: faces entre blocos opacos são omitidas (~80% menos triângulos)
+- `src/world/ChunkManager.ts` — Carrega/descarrega chunks dinamicamente baseado na posição do jogador; implementa `IWorldQuery` para compatibilidade com sistemas legados
+- Interface `IWorldQuery` em `src/types.ts` — Contrato compartilhado entre World legado e ChunkManager novo
+
+### Changed (Sprint 4)
+
+- `game.ts` agora instancia `ChunkManager` (com `BlockRegistry` + `TerrainGenerator`) em vez de `World`; chama `chunkManager.update()` no loop de update
+- Loading screen exibe progresso real de geração de chunks (X/81 chunks)
+- `physics.ts`, `building.ts`, `entities.ts`, `ui.ts` — `World` substituído por `IWorldQuery` para desacoplar dos sistemas legados
+- Plano de água agora é um `PlaneGeometry(512, 512)` global (sem blocos individuais de água)
+
+### Added (Sprint 0 — Fundação Técnica)
 
 - Estrutura de build com Vite e scripts npm para `dev`, `build`, `preview` e `typecheck`
 - Diretório `src/` com módulos TypeScript para todos os sistemas do jogo
 - Arquivo de tipagem compartilhada em `src/types.ts`
 
-### Changed
+### Changed (Sprint 0)
 
 - Migração de scripts globais para ES Modules com imports/exports explícitos
 - `index.html` agora usa apenas entrypoint modular (`/src/game.ts`)
 - Three.js migrado de CDN r128 para dependência npm (`three@latest`)
 - Renderer atualizado para API de color space moderna (`outputColorSpace` + `SRGBColorSpace`)
 
-### Removed
+### Removed (Sprint 0)
 
 - Cadeia de `<script>` globais antiga
 - Pasta legada `js/`

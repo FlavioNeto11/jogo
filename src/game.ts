@@ -5,14 +5,16 @@ import * as THREE from 'three';
 import './style.css';
 import Utils from './utils';
 import { AudioSystem } from './audio';
-import { World } from './world';
 import { Character } from './character';
 import { Physics } from './physics';
 import { BuildingSystem } from './building';
 import { EntitySystem } from './entities';
 import { ParticleSystem } from './particles';
 import { UISystem } from './ui';
-import type { GameSettings, GameState } from './types';
+import type { GameSettings, GameState, IWorldQuery } from './types';
+import { BlockRegistry } from './world/BlockRegistry';
+import { TerrainGenerator } from './world/TerrainGenerator';
+import { ChunkManager } from './world/ChunkManager';
 
 export class Game {
     canvas: HTMLCanvasElement;
@@ -22,7 +24,8 @@ export class Game {
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
 
-    world!: World;
+    world!: IWorldQuery;
+    chunkManager: ChunkManager | null = null;
     character!: Character;
     physics!: Physics;
     building!: BuildingSystem;
@@ -492,16 +495,23 @@ export class Game {
         setProgress(10, 'Preparando o mundo da família... 🌟');
         await this.sleep(200);
 
-        this.world = new World(this.scene);
+        const registry = new BlockRegistry();
+        const generator = new TerrainGenerator();
+        const cm = new ChunkManager(this.scene, generator, registry, 6);
+        this.chunkManager = cm;
+        this.world = cm;
 
-        setProgress(20, 'Construindo o terreno... 🌳');
-        await this.sleep(100);
+        setProgress(20, 'Gerando chunks iniciais... 🌳');
+        await this.sleep(50);
 
-        this.world.generate((progress, msg) => {
-            setProgress(20 + progress * 50, msg);
+        // Generate 4-chunk radius synchronously so the spawn area is ready
+        const totalChunks = (4 * 2 + 1) * (4 * 2 + 1); // 81
+        cm.generateInitial(4, (loaded, total) => {
+            setProgress(20 + (loaded / total) * 50, `Gerando terreno... ${loaded}/${total} chunks`);
         });
+        void totalChunks; // 81 chunks generated synchronously before continuing
 
-        setProgress(75, 'Preparando seu personagem... 🎮');
+        setProgress(72, 'Preparando seu personagem... 🎮');
         await this.sleep(100);
 
         this.character = new Character(this.scene);
@@ -630,6 +640,9 @@ export class Game {
     }
 
     update(dt: number): void {
+        // Stream chunks based on player position
+        this.chunkManager?.update(this.character.position.x, this.character.position.z);
+
         this.processInput(dt);
         this.physics.update(this.character, dt);
 

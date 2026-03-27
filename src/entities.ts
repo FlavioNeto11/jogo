@@ -3,8 +3,7 @@
 // ============================================
 import * as THREE from 'three';
 import Utils from './utils';
-import type { EntityUpdateResult } from './types';
-import type { World } from './world';
+import type { EntityUpdateResult, IWorldQuery } from './types';
 
 type FamilyMember = 'flavio' | 'anapaula' | 'mafe' | 'julia';
 
@@ -45,13 +44,13 @@ interface NPCUserData {
 
 export class EntitySystem {
     scene: THREE.Scene;
-    world: World;
+    world: IWorldQuery;
     entities: THREE.Object3D[];
     coins: THREE.Group[];
     npcs: THREE.Group[];
     particles: THREE.Object3D[];
 
-    constructor(scene: THREE.Scene, world: World) {
+    constructor(scene: THREE.Scene, world: IWorldQuery) {
         this.scene = scene;
         this.world = world;
         this.entities = [];

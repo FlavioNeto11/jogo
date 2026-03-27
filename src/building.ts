@@ -4,10 +4,10 @@
 import * as THREE from 'three';
 import type { Character } from './character';
 import type { Physics } from './physics';
-import type { World } from './world';
+import type { IWorldQuery } from './types';
 
 export class BuildingSystem {
-    world: World;
+    world: IWorldQuery;
     scene: THREE.Scene;
     selectedBlockType: string;
     ghostBlock!: THREE.Mesh;
@@ -15,7 +15,7 @@ export class BuildingSystem {
     selectedSlot: number;
     highlightBox!: THREE.LineSegments;
 
-    constructor(world: World, scene: THREE.Scene) {
+    constructor(world: IWorldQuery, scene: THREE.Scene) {
         this.world = world;
         this.scene = scene;
         this.selectedBlockType = 'brick';
